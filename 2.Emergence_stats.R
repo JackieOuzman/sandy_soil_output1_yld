@@ -1,4 +1,4 @@
-## Stirling Roberton
+## Stirling Roberton and modified by Jackie
 ## Purpose: This script is built to undertake base analsysis of trial strip data
 
 ## 1) Run analysis on observed data:                  i) whole of paddock; ii) By Zone
@@ -14,34 +14,69 @@ library(broom)
 library(multcompView)
 library(lubridate)
 
-dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
+################################################################################
+########################            Define the directory              ##########
+################################################################################
 
-headDir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}/work/Output-1/1.Walpeup_MRS125"
+dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
+headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 analysis.type <- "Emergence" #Harvest, InSeason, PeakBiomass, PreSeason
 analysis.yr <- "25"
 
+
+
+################################################################################
+########################    Read in metadata info file names and path ##########
+################################################################################
+
+file_path_details <- readxl::read_excel(
+  paste0(metadata_path,"names of treatments per site 2025 metadata and other info.xlsx"),
+  sheet = "location of file and details") %>% 
+  filter(Site == site)
+
+seasons <- readxl::read_excel(
+  paste0(metadata_path,"names of treatments per site 2025 metadata and other info.xlsx"),
+  sheet = "seasons") %>% 
+  filter(Site == site)
+
+
+
+#file names # we should aim for this to be generic
+boundary_file_name <- "Boundary_Masked_4326.shp"
+strip_file_name <- "MRS125_Strips_FINAL_wgs84.shp"
+zones_file_name <- "MRS125_NEWZONES_round_wgs84.tif"
+emergence_file_name <- "emergence-dat.csv"
+emergence_pts_file_name <- "MRS125_emergence-spls_adj_wgs84.shp"
+crs_used <- 4326
+
+
+
 ## Read in data
-boundary <- st_read(paste0(headDir,'/1.Paddock_Boundary/Walpeup_MRS125_Boundary_Masked_4326.shp'))
-strips <- st_read(paste0(headDir,"/5.Trial_Plan/FINAL-Trial-Plan/GIS/MRS125_Strips_FINAL_wgs84.shp"))
+boundary <- st_read(paste0(headDir,"/1.Paddock_Boundary/", site_name, "_", boundary_file_name))
+strips <- st_read(paste0(headDir,"/5.Trial_Plan/FINAL-Trial-Plan/GIS/", strip_file_name))
 #data.raw <- st_read(paste0(headDir,'/7.In_Season_data/24/4.Biomass/Biomass_NDVI_Walpeup_2024_merged_data.gpkg'))
 
-zones <- rast(paste0(headDir,'/3.Covariates/6.Clusters_Zones/FINAL/MRS125_NEWZONES_round_wgs84.tif'))
-zones <- terra::project(zones,'epsg:4326',method='near')
+zones <- rast(paste0(headDir,"/3.Covariates/6.Clusters_Zones/FINAL/", zones_file_name))
+zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
 
 # zones.2 <- rast(paste0(headDir,'/3.Covariates/6.Clusters_Zones/FINAL/MRS125_Zones_round_wgs84.tif'))
 # zones <- zones.2
 
-emergence.dat.raw <- read.csv(paste0(headDir,'/7.In_Season_data/24/1.Emergence/emergence-dat.csv'))
-emergence.pts <- st_read(paste0(headDir,'/4.Sampling/2.InSeason/24/Emergence/ACTUAL/MRS125_emergence-spls_adj_wgs84.shp'))
-emergence.pts.4326 <- st_transform(emergence.pts,crs=4326)
+dat.raw <- read.csv(paste0(headDir,"/7.In_Season_data/24/1.Emergence/", emergence_file_name))
+data.pts <- st_read(paste0(headDir,"/4.Sampling/2.InSeason/24/Emergence/ACTUAL/", emergence_pts_file_name))
+data.pts_proj <- st_transform(data.pts, crs= crs_used)
 
-emergence.dat.all <- inner_join(emergence.dat.raw,emergence.pts.4326,by = "pt_id")
-emergence.dat <- st_as_sf(emergence.dat.all[,c("pt_id","total_count","treat_desc.x","geometry")])
+dat.all <- inner_join(dat.raw,data.pts_proj,by = "pt_id")
+data_sf <- st_as_sf(dat.all[,c("pt_id","total_count","treat_desc.x","geometry")]) #converts the data frame into sf object
 
-data.raw <- emergence.dat
 
-strips <- st_make_valid(strips)
+
+data.raw <- data_sf #renaming data into generic name
+
+strips <- st_make_valid(strips) #Checks whether a geometry is valid, or makes an invalid geometry valid
 strips <- strips %>%
   mutate(treat_desc = ifelse(treat_desc == "Control (-Tillage -Lime)", "Control", treat_desc))
 
