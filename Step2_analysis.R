@@ -1,7 +1,3 @@
-## Stirling Roberton and modified by Jackie
-## Purpose: This script is built to undertake base analsysis of trial strip data
-
-## 1) Run analysis on observed data:                  i) whole of paddock; ii) By Zone
 
 rm(list=ls())
 library(terra)
@@ -52,153 +48,22 @@ field_details <- readxl::read_excel(
 
 ################################################################################
 
-### This needs to be adjusted in order of predicted resposne?
-
-order <- c(
-  "Control",
-  "Control (+Lime)",
-  "Control (-Tillage -Lime)..",
-  "Control..",
-  
-  "Active Inclusion..",
-  "Bednar",
-  "Bednar + Delve",
-  "Chicken Litter",
-  "Deep Rip..",
-  "Deep_Ripping",
-  "Horsch",
-  "Inlcusion_Ripping",
-  "Kuhn Performer..",
-  "Lime Control (3t)..",
-  "Lime Control (3t)",
-  "Passive Inclusion..",
-  "Plozza_Plough",
-  "Rip",
-  "Rip (+Lime)",
-  "Rip + Lime (3t)",
-  
-  "Rip + Delve",
-  "Rip + Lime (3t)..",
-  "Rip + Mix (+Lime) + FUTURE",
-  "Rip + Mix + FUTURE",
-  "Rip + PasInclusion",
-  "Rip + PasInclusion + Chicken Litter",
-  "Rip + PasInclusion + Chicken Litter +Dry",
-  "Rip + Spade",
-  "Rip..",
-  "Rip+Mix",
-  "Rip+Mix (+Lime)",
-  "Rotary_Spading",
-  "Spade + Delve",
-  "Spade + Lime (3t)..",
-  "Spade + Lime (3t)",
-  "Spade + Rip + Lime (3t)..",
-  "Spade + Rip + Lime (3t)",
-  "Spade + Rip..",
-  "Spade + Rip",
-  "Spade..",
-  "Spade",
-  "TopDown")
-  
-order_df <- as.data.frame(order)
-order_df <- order_df %>%  dplyr::rename(Treatments = order)
-## add a oder index to this order_df.
-
-order_df$order_rank <- 1:nrow(order_df)  
-  
+all.dat <- st_read(paste0(headDir,"/10.Analysis/25/Processing_Jackie/", 
+                                 analysis.type, "_", analysis.yr,".shp"))
 
 
-
-
-
-################################################################################
-
-## Read in data
-boundary   <- st_read(file.path(headDir, file_path_details$boundary))
-strips <-     st_read(file.path(headDir, file_path_details$trial.plan))
-strips <- st_make_valid(strips) #Checks whether a geometry is valid, or makes an invalid geometry valid
-
-#data.raw <- st_read(paste0(headDir,'/7.In_Season_data/24/4.Biomass/Biomass_NDVI_Walpeup_2024_merged_data.gpkg'))
-
-zones <- rast(paste0(file.path(headDir, file_path_details$`location of zone tif`)))
-zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
-
-
-dat.raw <-   read.csv(file.path(headDir,  field_details$Emergence_data))
-data.pts <-  st_read(file.path(headDir,   field_details$Emergence_sampling_GPS))
-data.pts_proj <- st_transform(data.pts, crs= crs_used)
-
-dat.all <- inner_join(dat.raw,data.pts_proj,by = "pt_id")
-data_sf <- st_as_sf(dat.all[,c("pt_id","total_count","treat_desc.x","geometry")]) #converts the data frame into sf object
-
-
-################################################################################
-data.raw <- data_sf #renaming data into generic name
-
-
-#assign the control when named vaguely
-
-strips <- strips %>%
-  mutate(treat_desc = 
-           case_when(
-             treat_desc == "Control (-Tillage -Lime)" ~ "Control",
-             treat_desc == "Control.." ~ "Control",
-             .default = as.character(treat_desc)
-           ) )
-         
-         
-#order the treatments by appending the order data frame to the strips
-names(order_df)
-names(strips)
-strips <- left_join(strips, order_df, by = join_by(treat_desc == Treatments))
-
-
-
-#### Helpers for later when plotting ####
-
-# Zone labels used only for facet strip text
-# zone_labels <- file_path_details %>% 
-#   filter(Site == site_number ) %>% 
-#   select(`zone label names` )
-# 
-# list_of_zone_labels_1 <- as.list(zone_labels)
-# list_of_zone_labels_2 <- unlist(strsplit(list_of_zone_labels_1$`zone label names`, ","))
-# names(list_of_zone_labels_2) <- unique(long_zone$zone_id)
-
-
-zone_desc <- c("1" = "Transition", "2" = "Dune","3" = "Swale")  # others keep their ID
-zone_labeller <- ggplot2::labeller(
-  zone_id = function(z) {
-    zc <- as.character(z)
-    desc <- zone_desc[zc]
-    ifelse(is.na(desc), zc, paste0(zc, " — ", desc))
-  }
-)
-
-################################################################################
-
-
-
-site.info <- list(
-  site_id    = site_name,
-  boundary   = boundary,      # sf
-  trial_plan = strips,    # sf
-  seasons    = seasons        # tibble
-)
-class(site.info) <- c("ssii_site", class(site.info))
-
-
-
-
-
+names(all.dat)
+all.dat <- all.dat %>% rename(
+  treat.col.name = trt_dsc,
+  target.variable = trgt_vr)
 
 ################################################################################
 ## Step 1) Define variables
-## Define variable in data to analyse
-variable <- "total_count"
-
-## Define treatment column name in strips
-treat.col.name <- "treat_desc"
+# ## Define variable in data to analyse
+# variable <- "total_count"
+# 
+# ## Define treatment column name in strips
+# treat.col.name <- "treat_desc"
 
 ## Define name of control
 control.name <- "Control"
@@ -210,35 +75,7 @@ clean.dat <- "No"
 
 model <- "XGBoost" #"Random Forest
 
-###############################################################################
-## Step 2) Clean observation data (if applicable)
 
-## Step 2.1) Clip to variable of interest and crop to trial area
-data.crop <- st_crop(data.raw[,variable],strips)
-names(data.crop)[1] <- "target.variable"
-
-if(clean.dat=="Yes"){ 
-  Q1 <- quantile(data.crop$target.variable, 0.25)
-  Q3 <- quantile(data.crop$target.variable, 0.75)
-  
-  IQR <- Q3 - Q1
-  lower_bound <- Q1 - 1.5 * IQR
-  upper_bound <- Q3 + 1.5 * IQR
-  
-  data.clean <- data.crop %>%
-    filter(target.variable >= lower_bound & target.variable <= upper_bound)
-  
-}else{
-  data.clean <- data.crop
-}
-
-###############################################################################
-## Step 3) Drill treatments and zones
-treat.drilled <- st_intersection(data.clean,strips[,treat.col.name])
-zones.drilled <- terra::extract(zones,treat.drilled)
-names(zones.drilled)[2] <- "zone"
-
-all.dat <- na.omit(cbind(treat.drilled,zones.drilled[-1]))
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%% General Stats - Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -248,88 +85,93 @@ all.dat <- na.omit(cbind(treat.drilled,zones.drilled[-1]))
 ## Step 4) Compute summary statistics for whole of field
 df <- st_drop_geometry(all.dat)
 
-control_group <- df %>% filter(!!sym(treat.col.name) == control.name) # Assuming Treat_Num 1 is the control group
+control_group <- df %>% filter(treat.col.name ==  "Control" )
 
 summary_stats <- df %>%
-  group_by(!!sym(treat.col.name)) %>%
+  group_by(treat.col.name) %>%
   summarize(
     mean = mean(target.variable, na.rm = TRUE),
     sd = sd(target.variable, na.rm = TRUE),
     min = min(target.variable, na.rm = TRUE),
     max = max(target.variable, na.rm = TRUE),
     median = median(target.variable, na.rm = TRUE),
+    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
+    Q3 = quantile(target.variable, 0.75, na.rm = TRUE),
     target.variable = n()
   )
 
-t_test_results <- df %>%
-  filter(!!sym(treat.col.name) != control.name) %>% # Exclude the control group
-  group_by(!!sym(treat.col.name)) %>%
-  do(tidy(t.test(target.variable ~ !!sym(treat.col.name), data = rbind(control_group, .)))) %>%
-  ungroup() %>%
-  mutate(adj_p_value = p.adjust(p.value, method = "bonferroni"),
-         significance = ifelse(adj_p_value <= 0.1, "Significant", "Not Significant"))
+# Step 1: Filter out the control group from the main dataset
+treatment_groups <- df %>%
+  filter(treat.col.name != "Control")
 
-print(t_test_results)
-print(summary_stats)
+# Step 2: Perform t-tests for each treatment group vs control
+t_test_results <- treatment_groups %>%
+  group_by(treat.col.name) %>%
+  do({
+    # Get current treatment group data
+    treatment_data <- .
+    
+    # Combine control group with current treatment group
+    combined_data <- rbind(control_group, treatment_data)
+    
+    # Run t-test comparing target variable between groups
+    test_result <- t.test(combined_data$target.variable ~ combined_data$treat.col.name)
+    
+    # Convert test results to tidy data frame
+    tidy(test_result)
+  }) %>%
+  ungroup()
+
+# Step 3: Apply Bonferroni correction for multiple comparisons
+t_test_results <- t_test_results %>%
+  mutate(adj_p_value = p.adjust(p.value, method = "bonferroni"))
+
+# Step 4: Add significance classification
+t_test_results <- t_test_results %>%
+  mutate(significance = ifelse(adj_p_value <= 0.1, "Significant", "Not Significant"))
+
+
 
 # Perform ANOVA
-anova <- aov(as.formula(paste("target.variable", "~", treat.col.name)), data = df)
+str(df)
+anova <- aov(target.variable ~ treat.col.name, data = df)
 summary(anova)
 
 # Tukey HSD post-hoc test
 tukey <- TukeyHSD(anova)
-tukey_results <- as.data.frame(tukey[treat.col.name])
+tukey_results <- as.data.frame(tukey$treat.col.name)
+
+#tukey_results <- as.data.frame(tukey[treat.col.name])
 
 # Get the significance letters from Tukey HSD results
 letters <- multcompLetters4(anova, tukey)
 
 # Convert to a dataframe
 sig.out <- data.frame(
-  treat = names(letters[[treat.col.name]]$Letters), 
-  Significance = letters[[treat.col.name]]$Letters
+  treat = names(letters[["treat.col.name"]]$Letters), 
+  Significance = letters[["treat.col.name"]]$Letters
 )
-names(sig.out)[1] <- treat.col.name
+names(sig.out)[1] <- "treat.col.name"
 
-summary_stats.2 <- inner_join(summary_stats,sig.out, by  = treat.col.name)
+summary_stats.2 <- inner_join(summary_stats,sig.out, by  = "treat.col.name")
 print(summary_stats.2)
 
-write.csv(summary_stats.2,paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/Emergence/summary-stats-whole-pdk.csv'))
+
+
+
+rm(summary_stats, sig.out, anova, letters, t_test_results, tukey, tukey_results)
+
+
+
 
 ################################################################################
-## Step 5) Make a ggplot
+###############            Write to file               #########################
 
-# Compute summary statistics (median, 25th, and 75th percentiles)
-summary_stats <- df %>%
-  group_by(!!sym(treat.col.name)) %>%
-  summarise(
-    median = median(target.variable, na.rm = TRUE),
-    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
-    Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
-  )
+write.csv(summary_stats.2, paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/summary-stats-whole-pdk.csv'))
 
-# Create the bar plot
-site.bar.plot <- ggplot(summary_stats, aes(x = !!sym(treat.col.name), y = median, fill = !!sym(treat.col.name))) +
-  geom_col(alpha = 0.7) +  # Bars for median values
-  geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +  # Quartile error bars
-  labs(
-    title = "Plant Count by Treatment",
-    x = "Treatment Description",
-    y = "Plant Density (plants/m2)"
-  ) +
-  theme_minimal() +
-  theme(
-    text = element_text(size = 18),
-    axis.title = element_text(size = 18),          # Increase axis label font size
-    axis.text = element_text(size = 16),           # Axis text size (already set above, just making explicit)
-    plot.title = element_text(size = 22, hjust = 0.5),  # Center and enlarge title
-    legend.position = "none",
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
 
-# Print the plot
-site.bar.plot
 
-ggsave(paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/Emergence/emergence-plot-whole-pdk.png'),site.bar.plot)
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%% By Zone Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
