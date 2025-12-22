@@ -1,4 +1,5 @@
-
+#install.packages("emmeans")
+#install.packages("broom")
 rm(list=ls())
 library(terra)
 library(sf)
@@ -9,6 +10,8 @@ library(tidyr)
 library(broom)
 library(multcompView)
 library(lubridate)
+library(emmeans)
+
 
 ################################################################################
 ########################            Define the directory              ##########
@@ -177,113 +180,139 @@ write.csv(summary_stats.2, paste0(headDir,'/10.Analysis/',analysis.yr,'/',analys
 #%%%%%%%%%%%%%%%%%%%%%%%% By Zone Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-################################################################################
-## Step 6) Compute summary statistics by zone
-
-## SKIP THIS FOR WALPEUP MRS125 FOR THE 2025 SEASON - NOT ENOUGH DATA POINTS 
-
-# for(i in 1:length(unique(all.dat$zone))){
-#   df <- all.dat %>% 
-#     filter(zone == i)
-#   
-#   control_group <- df %>% filter(!!sym(treat.col.name) == control.name) # Assuming Treat_Num 1 is the control group
-#   
-#   summary_stats <- df %>%
-#     group_by(!!sym(treat.col.name)) %>%
-#     summarize(
-#       mean = mean(target.variable, na.rm = TRUE),
-#       sd = sd(target.variable, na.rm = TRUE),
-#       min = min(target.variable, na.rm = TRUE),
-#       max = max(target.variable, na.rm = TRUE),
-#       median = median(target.variable, na.rm = TRUE)
-#     )
-#   
-#   t_test_results <- df %>%
-#     filter(!!sym(treat.col.name) != control.name) %>% # Exclude the control group
-#     group_by(!!sym(treat.col.name)) %>%
-#     do(tidy(t.test(target.variable ~ !!sym(treat.col.name), data = rbind(control_group, .)))) %>%
-#     ungroup() %>%
-#     mutate(adj_p_value = p.adjust(p.value, method = "bonferroni"),
-#            significance = ifelse(adj_p_value <= 0.1, "Significant", "Not Significant"))
-#   
-#   # Perform ANOVA
-#   anova <- aov(as.formula(paste("target.variable", "~", treat.col.name)), data = df)
-#   summary(anova)
-#   
-#   # Tukey HSD post-hoc test
-#   tukey <- TukeyHSD(anova)
-#   tukey_results <- as.data.frame(tukey[treat.col.name])
-#   
-#   # Get the significance letters from Tukey HSD results
-#   letters <- multcompLetters4(anova, tukey)
-#   
-#   # Convert to a dataframe
-#   sig.out <- data.frame(
-#     treat = names(letters[[treat.col.name]]$Letters), 
-#     Significance = letters[[treat.col.name]]$Letters
-#   )
-#   names(sig.out)[1] <- treat.col.name
-#   
-#   summary_stats.2 <- st_drop_geometry(inner_join(summary_stats,sig.out, by  = treat.col.name))
-#   print(summary_stats.2)
-# }
 
 
-
-################################################################################
-## Step 7) Plot by Zone
+## Step 6) Plot by Zone
 df <- all.dat
 df$zone <- as.factor(df$zone)
 df <- na.omit(df)
 nrow(df)
 #write.csv(df,paste0(headDir,'/7.In_Season_data/24/1.Emergence/emergence_rStructered.csv'))
 
-summary_stats <- df %>%
-  group_by(!!sym(treat.col.name), zone) %>%
-  summarise(
+
+summary_stats_zone <- df %>%
+  group_by(treat.col.name, zone) %>%
+  summarize(
+    mean = mean(target.variable, na.rm = TRUE),
+    sd = sd(target.variable, na.rm = TRUE),
+    min = min(target.variable, na.rm = TRUE),
+    max = max(target.variable, na.rm = TRUE),
     median = median(target.variable, na.rm = TRUE),
     Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
     Q3 = quantile(target.variable, 0.75, na.rm = TRUE),
-    .groups = "drop"
+    target.variable = n()
   )
 
+str(summary_stats_zone)
 
-zone.bar.plot <- summary_stats %>%
-  dplyr::rename(zone_id = zone) %>%
-  ggplot(aes(x = !!sym(treat.col.name), y = median, fill = !!sym(treat.col.name))) +
-  geom_col(alpha = 0.7) +
-  geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
-  labs(
-    title = "Plant Count by Treatment and Zone",
-    x = NULL,
-    y = "Plant Density (plants/m2)",
-    fill = "Treatment"
-  ) +
-  facet_wrap(~ zone_id, scales = "free_x", labeller = zone_labeller) +
-  theme_minimal() +
-  theme(
-    text = element_text(size = 22),
-    axis.title.y = element_text(size = 22),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    legend.title = element_text(size = 18),
-    legend.text = element_text(size = 14),
-    strip.text = element_text(size = 18, face = "bold"),
-    plot.title = element_text(hjust = 0.5),
-    
-    # legend at bottom (matching your NDVI plot)
-    legend.position        = "bottom",
-    legend.box             = "vertical",
-    legend.justification   = "center"
-  )+
-  guides(
-    fill = guide_legend(title.position = "top", title.hjust = 0.5)
+
+
+# Given your balanced trial (every treatment in every zone, 4 reps each), the right approach is:
+#   
+#   Fit a two‑way ANOVA with interaction (as you did).
+# Because the interaction is not significant, report marginal (overall) treatment effects across zones and marginal zone effects across treatments.
+# Use emmeans for post-hoc contrasts:
+#   
+#   Dunnett (each treatment vs control) is ideal when you specifically compare to a control.
+# Tukey if you want all pairwise treatment comparisons.
+
+
+
+# Perform ANOVA
+str(df)
+distinct(df, zone)
+## split
+
+
+anova_zones <- 
+  aov(target.variable ~ treat.col.name * zone, data = df)
+tab <- summary(anova_zones)[[1]]
+
+# Turn rownames into a 'term' column and build significance labels
+anova_df <- tab %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("term") %>%
+  dplyr::rename(
+    df       = Df,
+    sumsq    = `Sum Sq`,
+    meansq   = `Mean Sq`,
+    statistic= `F value`,
+    p.value  = `Pr(>F)`
+  ) %>%
+  dplyr::mutate(
+    signif_code = dplyr::case_when(
+      p.value < 0.001 ~ "***",
+      p.value < 0.01  ~ "**",
+      p.value < 0.05  ~ "*",
+      p.value < 0.1   ~ ".",
+      TRUE            ~ " "
+    ),
+    significant = p.value < 0.05
   )
 
+summary_stats_zone_df <- as.data.frame(summary_stats_zone)
+anova_df
+str(anova_df)
 
-zone.bar.plot
+# Test if treatment effects vary by zone (interaction) and compare treatments within each zone
 
-ggsave(paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/Emergence/emergence-by-zone.png'),zone.bar.plot)
+# Simple effects: treatment differences within each zone
+emm_zonewise <- emmeans(anova_zones, ~ treat.col.name | zone)
+emm_zonewise
+pairs(emm_zonewise, adjust = "tukey")
+
+
+
+
+
+
+
+################################################################################
+###############            Write to file               #########################
+
+write.csv(summary_stats_zone_df, paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/summary-stats-zone.csv'))
+
+
+
+
+
+
+# zone.bar.plot <- summary_stats %>%
+#   dplyr::rename(zone_id = zone) %>%
+#   ggplot(aes(x = !!sym(treat.col.name), y = median, fill = !!sym(treat.col.name))) +
+#   geom_col(alpha = 0.7) +
+#   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
+#   labs(
+#     title = "Plant Count by Treatment and Zone",
+#     x = NULL,
+#     y = "Plant Density (plants/m2)",
+#     fill = "Treatment"
+#   ) +
+#   facet_wrap(~ zone_id, scales = "free_x", labeller = zone_labeller) +
+#   theme_minimal() +
+#   theme(
+#     text = element_text(size = 22),
+#     axis.title.y = element_text(size = 22),
+#     axis.text.x = element_blank(),
+#     axis.ticks.x = element_blank(),
+#     legend.title = element_text(size = 18),
+#     legend.text = element_text(size = 14),
+#     strip.text = element_text(size = 18, face = "bold"),
+#     plot.title = element_text(hjust = 0.5),
+#     
+#     # legend at bottom (matching your NDVI plot)
+#     legend.position        = "bottom",
+#     legend.box             = "vertical",
+#     legend.justification   = "center"
+#   )+
+#   guides(
+#     fill = guide_legend(title.position = "top", title.hjust = 0.5)
+#   )
+# 
+# 
+# zone.bar.plot
+# 
+# ggsave(paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/Emergence/emergence-by-zone.png'),zone.bar.plot)
 
 
 
