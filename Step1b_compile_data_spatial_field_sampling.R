@@ -68,7 +68,7 @@ field_details <- readxl::read_excel(
 
 ################################################################################
 
-## Read in data
+## Read in field data 
 boundary   <- st_read(file.path(headDir, file_path_details$boundary))
 strips <-     st_read(file.path(headDir, file_path_details$trial.plan))
 strips <- st_make_valid(strips) #Checks whether a geometry is valid, or makes an invalid geometry valid
