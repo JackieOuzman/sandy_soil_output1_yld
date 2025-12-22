@@ -79,7 +79,7 @@ zones <- rast(paste0(file.path(headDir, file_path_details$`location of zone tif`
 zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
 
 
-#dat.raw <-   read.csv(file.path(headDir,  field_details$data))
+
 dat.raw <-   read_excel(file.path(headDir,  field_details$data))
 data.pts <-  st_read(file.path(headDir,   field_details$sampling_GPS))
 data.pts_proj <- st_transform(data.pts, crs= crs_used)
