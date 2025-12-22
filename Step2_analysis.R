@@ -47,7 +47,9 @@ seasons <- readxl::read_excel(
 field_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "location of observation data") %>% 
-  filter(Site == site_number)
+  filter(Site == site_number) %>% 
+  filter(analysis_type == analysis.type )
+
 
 ################################################################################
 
@@ -272,47 +274,8 @@ pairs(emm_zonewise, adjust = "tukey")
 
 write.csv(summary_stats_zone_df, paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/summary-stats-zone.csv'))
 
+################################################################################
 
-
-
-
-
-# zone.bar.plot <- summary_stats %>%
-#   dplyr::rename(zone_id = zone) %>%
-#   ggplot(aes(x = !!sym(treat.col.name), y = median, fill = !!sym(treat.col.name))) +
-#   geom_col(alpha = 0.7) +
-#   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
-#   labs(
-#     title = "Plant Count by Treatment and Zone",
-#     x = NULL,
-#     y = "Plant Density (plants/m2)",
-#     fill = "Treatment"
-#   ) +
-#   facet_wrap(~ zone_id, scales = "free_x", labeller = zone_labeller) +
-#   theme_minimal() +
-#   theme(
-#     text = element_text(size = 22),
-#     axis.title.y = element_text(size = 22),
-#     axis.text.x = element_blank(),
-#     axis.ticks.x = element_blank(),
-#     legend.title = element_text(size = 18),
-#     legend.text = element_text(size = 14),
-#     strip.text = element_text(size = 18, face = "bold"),
-#     plot.title = element_text(hjust = 0.5),
-#     
-#     # legend at bottom (matching your NDVI plot)
-#     legend.position        = "bottom",
-#     legend.box             = "vertical",
-#     legend.justification   = "center"
-#   )+
-#   guides(
-#     fill = guide_legend(title.position = "top", title.hjust = 0.5)
-#   )
-# 
-# 
-# zone.bar.plot
-# 
-# ggsave(paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/Emergence/emergence-by-zone.png'),zone.bar.plot)
 
 
 
@@ -340,8 +303,8 @@ write.csv(summary_stats_zone_df, paste0(headDir,'/10.Analysis/',analysis.yr,'/',
 # #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # 
 # ## Build a spatial yield model between covariates and crop yield
-# dat.df <- st_drop_geometry(df)
-# extracted.covs <- terra::extract(covariates,df)
+ dat.df <- st_drop_geometry(df)
+ extracted.covs <- terra::extract(covariates,df)
 # plot(covariates[[8]])
 # 
 # train.dat <- cbind(dat.df[,c("target.variable",treat.col.name)],extracted.covs[,-c(1)])

@@ -13,6 +13,7 @@ library(tidyr)
 library(broom)
 library(multcompView)
 library(lubridate)
+library(readxl)
 
 ################################################################################
 ########################            Define the directory              ##########
@@ -24,7 +25,7 @@ site_name <- "Walpeup_MRS125"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 analysis.type <- "Emergence" #Harvest, InSeason, PeakBiomass, PreSeason
-variable <- "total_count"
+variable <- "Total"
 treat.col.name <- "treat_desc"
 
 clean.dat <- "No"
@@ -52,64 +53,14 @@ seasons <- readxl::read_excel(
 field_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "location of observation data") %>% 
-  filter(Site == site_number)
+  filter(Site == site_number) %>% 
+  filter(analysis_type == analysis.type )
+
+
 
 ################################################################################
 
-### This needs to be adjusted in order of predicted resposne?
 
-order <- c(
-  "Control",
-  "Control (+Lime)",
-  "Control (-Tillage -Lime)..",
-  "Control..",
-  
-  "Active Inclusion..",
-  "Bednar",
-  "Bednar + Delve",
-  "Chicken Litter",
-  "Deep Rip..",
-  "Deep_Ripping",
-  "Horsch",
-  "Inlcusion_Ripping",
-  "Kuhn Performer..",
-  "Lime Control (3t)..",
-  "Lime Control (3t)",
-  "Passive Inclusion..",
-  "Plozza_Plough",
-  "Rip",
-  "Rip (+Lime)",
-  "Rip + Lime (3t)",
-  
-  "Rip + Delve",
-  "Rip + Lime (3t)..",
-  "Rip + Mix (+Lime) + FUTURE",
-  "Rip + Mix + FUTURE",
-  "Rip + PasInclusion",
-  "Rip + PasInclusion + Chicken Litter",
-  "Rip + PasInclusion + Chicken Litter +Dry",
-  "Rip + Spade",
-  "Rip..",
-  "Rip+Mix",
-  "Rip+Mix (+Lime)",
-  "Rotary_Spading",
-  "Spade + Delve",
-  "Spade + Lime (3t)..",
-  "Spade + Lime (3t)",
-  "Spade + Rip + Lime (3t)..",
-  "Spade + Rip + Lime (3t)",
-  "Spade + Rip..",
-  "Spade + Rip",
-  "Spade..",
-  "Spade",
-  "TopDown")
-  
-order_df <- as.data.frame(order)
-order_df <- order_df %>%  dplyr::rename(Treatments = order)
-## add a oder index to this order_df.
-
-order_df$order_rank <- 1:nrow(order_df)  
-  
 
 
 
@@ -128,14 +79,18 @@ zones <- rast(paste0(file.path(headDir, file_path_details$`location of zone tif`
 zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
 
 
-dat.raw <-   read.csv(file.path(headDir,  field_details$Emergence_data))
-data.pts <-  st_read(file.path(headDir,   field_details$Emergence_sampling_GPS))
+#dat.raw <-   read.csv(file.path(headDir,  field_details$data))
+dat.raw <-   read_excel(file.path(headDir,  field_details$data))
+data.pts <-  st_read(file.path(headDir,   field_details$sampling_GPS))
 data.pts_proj <- st_transform(data.pts, crs= crs_used)
-data.pts_proj <- data.pts_proj %>% select(- c("pt_uuid", "site",
-                                              "location", "treat_desc",
-                                              "treat")) #remove some clm to help with the join
+## remove some clm to help with join - this is not required with every data set
+# data.pts_proj <- data.pts_proj %>% select(- c("pt_uuid", "site",
+#                                               "location", "treat_desc",
+#                                               "treat")) #remove some clm to help with the join
+data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry" ) 
 
-  names(dat.raw)
+  
+names(dat.raw)
 names(data.pts_proj)
   
 dat.all <- inner_join(dat.raw,data.pts_proj,by = "pt_id")
@@ -159,33 +114,9 @@ strips <- strips %>%
            ) )
          
          
-#order the treatments by appending the order data frame to the strips
-names(order_df)
-names(strips)
-strips <- left_join(strips, order_df, by = join_by(treat_desc == Treatments))
 
 
 
-#### Helpers for later when plotting ####
-
-# Zone labels used only for facet strip text
-# zone_labels <- file_path_details %>% 
-#   filter(Site == site_number ) %>% 
-#   select(`zone label names` )
-# 
-# list_of_zone_labels_1 <- as.list(zone_labels)
-# list_of_zone_labels_2 <- unlist(strsplit(list_of_zone_labels_1$`zone label names`, ","))
-# names(list_of_zone_labels_2) <- unique(long_zone$zone_id)
-
-
-# zone_desc <- c("1" = "Transition", "2" = "Dune","3" = "Swale")  # others keep their ID
-# zone_labeller <- ggplot2::labeller(
-#   zone_id = function(z) {
-#     zc <- as.character(z)
-#     desc <- zone_desc[zc]
-#     ifelse(is.na(desc), zc, paste0(zc, " — ", desc))
-#   }
-# )
 
 ################################################################################
 
@@ -204,6 +135,9 @@ class(site.info) <- c("ssii_site", class(site.info))
 ## Step 2) Clean observation data (if applicable)
 
 ## Step 2.1) Clip to variable of interest and crop to trial area
+names(data.raw)
+
+
 data.crop <- st_crop(data.raw[,variable],strips)
 names(data.crop)[1] <- "target.variable" #renames 1st clm heading with a generic name
 

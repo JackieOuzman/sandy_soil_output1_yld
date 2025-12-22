@@ -45,7 +45,9 @@ seasons <- readxl::read_excel(
 field_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "location of observation data") %>% 
-  filter(Site == site_number)
+  filter(Site == site_number) %>% 
+  filter(analysis_type == analysis.type )
+
 
 
 #### Bring in the data 
@@ -217,8 +219,6 @@ savedfilename_zone <- paste0("summary_", analysis.type," plot-zone.png")
 ggsave(paste0(headDir,"/10.Analysis/",analysis.yr,'/',analysis.type,"/"
               ,savedfilename_zone),
        summary_stats_zone_plot)
-# 
-# ggsave(paste0(headDir,'/10.Analysis/',analysis.yr,'/',analysis.type,'/Emergence/emergence-by-zone.png'),zone.bar.plot)
 
 
 
