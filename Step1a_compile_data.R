@@ -245,53 +245,53 @@ write_sf(file1_2,
 
 
 
-###############################################################################
-###############################################################################
-## Step 2) Clean observation data (if applicable)
-
-## Step 2.1) Clip to variable of interest and crop to trial area
-names(data.raw)
-
-
-data.crop <- st_crop(data.raw[,variable],strips)
-names(data.crop)[1] <- "target.variable" #renames 1st clm heading with a generic name
-
-if(clean.dat=="Yes"){ 
-  Q1 <- quantile(data.crop$target.variable, 0.25)
-  Q3 <- quantile(data.crop$target.variable, 0.75)
-  
-  IQR <- Q3 - Q1
-  lower_bound <- Q1 - 1.5 * IQR
-  upper_bound <- Q3 + 1.5 * IQR
-  
-  data.clean <- data.crop %>%
-    filter(target.variable >= lower_bound & target.variable <= upper_bound)
-  
-}else{
-  data.clean <- data.crop
-}
-
-rm(data.raw, data.crop, data_sf)
-
-###############################################################################
-## Step 3) Drill treatments and zones
-
-
-treat.drilled <- st_intersection( data.clean,  strips)
-
-zones.drilled <- terra::extract(zones,treat.drilled)
-names(zones.drilled)[2] <- "zone" #renames 2nd clm heading with a generic name
-
-all.dat <- na.omit(cbind(treat.drilled,zones.drilled))
-
-rm(treat.drilled, zones.drilled)
-###############################################################################
-## Save outputs ready for the next step.
-
-str(all.dat)
-
-write_sf(all.dat, 
-          paste0(headDir,"/10.Analysis/25/Processing_Jackie/", analysis.type, "_", analysis.yr,".shp"))
-
-
-
+# ###############################################################################
+# ###############################################################################
+# ## Step 2) Clean observation data (if applicable)
+# 
+# ## Step 2.1) Clip to variable of interest and crop to trial area
+# names(data.raw)
+# 
+# 
+# data.crop <- st_crop(data.raw[,variable],strips)
+# names(data.crop)[1] <- "target.variable" #renames 1st clm heading with a generic name
+# 
+# if(clean.dat=="Yes"){ 
+#   Q1 <- quantile(data.crop$target.variable, 0.25)
+#   Q3 <- quantile(data.crop$target.variable, 0.75)
+#   
+#   IQR <- Q3 - Q1
+#   lower_bound <- Q1 - 1.5 * IQR
+#   upper_bound <- Q3 + 1.5 * IQR
+#   
+#   data.clean <- data.crop %>%
+#     filter(target.variable >= lower_bound & target.variable <= upper_bound)
+#   
+# }else{
+#   data.clean <- data.crop
+# }
+# 
+# rm(data.raw, data.crop, data_sf)
+# 
+# ###############################################################################
+# ## Step 3) Drill treatments and zones
+# 
+# 
+# treat.drilled <- st_intersection( data.clean,  strips)
+# 
+# zones.drilled <- terra::extract(zones,treat.drilled)
+# names(zones.drilled)[2] <- "zone" #renames 2nd clm heading with a generic name
+# 
+# all.dat <- na.omit(cbind(treat.drilled,zones.drilled))
+# 
+# rm(treat.drilled, zones.drilled)
+# ###############################################################################
+# ## Save outputs ready for the next step.
+# 
+# str(all.dat)
+# 
+# write_sf(all.dat, 
+#           paste0(headDir,"/10.Analysis/25/Processing_Jackie/", analysis.type, "_", analysis.yr,".shp"))
+# 
+# 
+# 

@@ -264,3 +264,5 @@ collated_data <- collated_data %>%
 rm(Fld_ob1, Fld_ob2, date_closeset_to_fld_ob) 
 
 ################################################################################
+write_sf(collated_data,
+         paste0(headDir,"/10.Analysis/25/Processing_Jackie/", site_name,"_collated_data_raw_sentinel", analysis.yr,".shp"))
