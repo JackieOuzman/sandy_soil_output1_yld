@@ -1,7 +1,7 @@
 ## Stirling Roberton and modified by Jackie
 ## Purpose: This script is built to undertake base analsysis of trial strip data
 
-## 1) Run analysis on observed data:                  i) whole of paddock; ii) By Zone
+## 1) get the field sampling location, date and results
 
 rm(list=ls())
 library(terra)
@@ -25,9 +25,9 @@ headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
 
-analysis.type <- "Emergence" #Harvest, InSeason, PeakBiomass, PreSeason
-variable <- "Total"
-treat.col.name <- "treat_desc"
+# analysis.type <- "Emergence" #Harvest, InSeason, PeakBiomass, PreSeason
+# variable <- "Total"
+# treat.col.name <- "treat_desc"
 
 clean.dat <- "No"
 analysis.yr <- "25"
@@ -51,76 +51,20 @@ seasons <- readxl::read_excel(
   filter(Site == site_number)
 
 
-field_details <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "location of observation data") %>% 
-  filter(Site == site_number) %>% 
-  filter(analysis_type == analysis.type )
-
-
 ################################################################################
-
-
-
-
-
-
-
-################################################################################
-
 ## Read in field data 
-boundary   <- st_read(file.path(headDir, file_path_details$boundary))
-strips <-     st_read(file.path(headDir, file_path_details$trial.plan))
-strips <- st_make_valid(strips) #Checks whether a geometry is valid, or makes an invalid geometry valid
 
 
-zones <- rast(paste0(file.path(headDir, file_path_details$`location of zone tif`)))
-zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
+collated_data <- st_read(paste0(headDir,
+                        "/10.Analysis/25/Processing_Jackie/", 
+                        site_name,"_collated_data_raw_", 
+                        analysis.yr,".shp"))
 
-dat.raw <-   read_excel(file.path(headDir,  field_details$data))
-data.pts <-  st_read(file.path(headDir,   field_details$sampling_GPS))
-data.pts_proj <- st_transform(data.pts, crs= crs_used)
-## remove some clm to help with join - this is not required with every data set
-# data.pts_proj <- data.pts_proj %>% select(- c("pt_uuid", "site",
-#                                               "location", "treat_desc",
-#                                               "treat")) #remove some clm to help with the join
-data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry" ) 
-
-
-names(dat.raw)
-names(data.pts_proj)
-
-dat.all <- inner_join(dat.raw,data.pts_proj,by = "pt_id")
-data_sf <- st_as_sf(dat.all) #converts the data frame into sf object
-str(data_sf)
-rm(dat.raw,data.pts,  dat.all)
-data.raw <- data_sf #renaming data into generic name
-
-
-#assign the control when named vaguely
-
-strips <- strips %>%
-  mutate(treat_desc = 
-           case_when(
-             treat_desc == "Control (-Tillage -Lime)" ~ "Control",
-             treat_desc == "Control.." ~ "Control",
-             .default = as.character(treat_desc)
-           ) )
-
-data.crop <- st_crop(data.raw[,variable],strips)
-names(data.crop)[1] <- "target.variable" #renames 1st clm heading with a generic name
-data.crop <- st_intersection( data.crop,  strips)
-data.crop <- data.crop %>% mutate(field_ob = analysis.type,
-                                  date_of_field_ob = field_details$Date_collected
-                                  )
-rm(data.raw, data_sf)
-###############################################################################
-###############################################################################
-# Get the spatial data
 
 ################################################################################
-############################  Sentinel-2   #############################
-################################################################################
+################ Read in Sentinel-2 data ########################
+
+
 # ====================== list of bad dates for satellite ======================
 
 bad_dates <- readxl::read_excel(
@@ -154,7 +98,9 @@ file_path <- paste0(file_path_details$`Generic path`,
                     ".tif")
 file_path
 
-
+################################################################################
+## read in the sentinel stack
+################################################################################
 
 sen.dat <- terra::rast(file_path)
 sen.dat <- terra::project(sen.dat,'epsg:4326')
@@ -201,70 +147,120 @@ if (length(drop_idx)) {
   names(sen.dat) <- format(img_dates_sen, "%Y-%m-%d")
 }  
 
-## I am having trouble writing this new raster 
+
+################################################################################
+
 sen.dat
 # #Note: Crystal Brook straddles 2x tiles, but the difference is not noticeable
 # #We can simply just drop one of the tile sets.
 nm <- names(sen.dat)
-
-
 # Keep only the first occurrence of each unique name
 sen.dat <- sen.dat[[!duplicated(nm)]]
 
-nm_df <- data.frame(sential_dates= nm)
+################################################################################
+### work out which images are closest to sampling event
+
+list_sentinel_dates_df <- data.frame(sential_dates= nm)
+str(list_sentinel_dates_df)
+str(collated_data)
+
+collated_data <- collated_data %>%  mutate(date = ymd_hms(date))
+sampling_date <- collated_data %>% 
+  st_drop_geometry() %>%
+  distinct(date, .keep_all = TRUE) %>% 
+  select(fld_ob, date)
+
+list_sentinel_dates_df <- list_sentinel_dates_df %>%  
+  dplyr::mutate(date_ob1 = sampling_date$date[1],
+                Fld_ob1 = sampling_date$fld_ob[1],
+                
+                date_ob2 = sampling_date$date[2],
+                Fld_ob2 = sampling_date$fld_ob[2])
+
+str(list_sentinel_dates_df)
+list_sentinel_dates_df$sential_dates <- as.Date(list_sentinel_dates_df$sential_dates)
+list_sentinel_dates_df$date_ob1 <- as.Date(list_sentinel_dates_df$date_ob1)
+list_sentinel_dates_df$date_ob2 <- as.Date(list_sentinel_dates_df$date_ob2)
+
+list_sentinel_dates_df <- list_sentinel_dates_df %>%  
+  dplyr::mutate(date_from_fld_ob1 = abs(sential_dates - date_ob1),
+                date_from_fld_ob2 = abs(sential_dates - date_ob2))
+   
+list_sentinel_dates_df$date_from_fld_ob1 <- as.double(list_sentinel_dates_df$date_from_fld_ob1)
+list_sentinel_dates_df$date_from_fld_ob2 <- as.double(list_sentinel_dates_df$date_from_fld_ob2)
+
+
 str(nm_df)
-nm_df <- nm_df %>%  
-  dplyr::mutate(date_ob = field_details$Date_collected[1],
-                Fld_ob = field_details$analysis_type[1])
 
-nm_df$sential_dates <- as.Date(nm_df$sential_dates)
-nm_df$date_ob <- as.Date(nm_df$date_ob)
+date_closeset_to_fld_ob <-  list_sentinel_dates_df %>%
+  filter(
+    date_from_fld_ob1 == min(date_from_fld_ob1, na.rm = TRUE) |
+    date_from_fld_ob2 == min(date_from_fld_ob2, na.rm = TRUE)
+  )
 
-nm_df <- nm_df %>%  
-  dplyr::mutate(date_from_fld_ob = abs(sential_dates - date_ob))%>%
-  arrange(date_from_fld_ob) 
-nm_df$date_from_fld_ob <- as.double(nm_df$date_from_fld_ob)
-str(nm_df)
 
-date_closeset_to_fld_ob <- nm_df %>% 
-  filter(date_from_fld_ob == min(date_from_fld_ob))
 
-closest_date <- date_closeset_to_fld_ob$sential_dates[1]
+closest_date <- date_closeset_to_fld_ob$sential_dates
 sen.dat_closest_date <- sen.dat[[as.character(closest_date)]]
 sen.dat_closest_date
 
 
+
+
 ################################################################################
 # Extract the raster value for the sampling points
-data.pts_proj
+collated_data
 sen.dat_closest_date
 
 
 
 # Extract values from raster at point locations
-extracted_values <- terra::extract(sen.dat_closest_date, data.pts_proj)
+extracted_values <- terra::extract(sen.dat_closest_date, collated_data)
 
-# Add the extracted values to your points data frame
-data.pts_proj$raster_value <- extracted_values[, 2]  # Column 2 contains the values
+# Bind all extracted columns to your data (exclude ID column)
+collated_data <- bind_cols(collated_data, extracted_values[, -1])
+
+
+##tidy up
+rm(extracted_values, sen.dat_closest_date, closest_date, list_sentinel_dates_df)
+rm(bad_dates, bad_dates_year, bad_dates_list, date_8, dates_hy, dates_chr, drop_idx,
+   img_dates_sen, nm, nm_df, o, sen.dat)
+
+## make one clm for all the Sentinel dates
+date_closeset_to_fld_ob
+
+#slit into 2 files
+#Fld_ob1 is the Emergence
+Fld_ob1 <- date_closeset_to_fld_ob %>% 
+  select(Fld_ob1, sential_dates , date_from_fld_ob1) %>% 
+  filter(date_from_fld_ob1 == min(date_from_fld_ob1, na.rm = TRUE)) %>% 
+  rename(fld_ob = Fld_ob1)
+
+#Fld_ob2 is the PeakBiomass
+Fld_ob2 <- date_closeset_to_fld_ob %>% 
+  select(Fld_ob2, sential_dates , date_from_fld_ob2) %>% 
+  filter(date_from_fld_ob2 == min(date_from_fld_ob2, na.rm = TRUE))%>% 
+  rename(fld_ob = Fld_ob2)
+
+str(collated_data)
+
+collated_data <- collated_data %>% 
+  mutate(sential_dates = case_when(
+    fld_ob == "Emergence" ~ Fld_ob1$sential_dates,
+    fld_ob == "PeakBiomass" ~ Fld_ob2$sential_dates
+  ))
+
+
+
+collated_data <- collated_data %>% 
+  mutate(sential_value = case_when(
+    sential_dates == "2025-05-22" ~ `2025-05-22`,
+    sential_dates == "2025-09-29" ~ `2025-09-29`
+  ))
+
+collated_data <- collated_data %>% 
+  select(-`2025-05-22`, -`2025-09-29`)
+
+rm(Fld_ob1, Fld_ob2, date_closeset_to_fld_ob) 
 
 ################################################################################
-data.pts_proj <- data.pts_proj %>% 
-  select(pt_id, raster_value) %>%
-  st_drop_geometry()  # Convert to regular data frame
-################################################################################
-
-data.crop <- cbind(data.crop, data.pts_proj) %>% 
-  mutate(sential_date = date_closeset_to_fld_ob$sential_dates,
-         image_type = paste0("sential_",ratio_name))
-data.crop
-data.crop_df <- data.crop %>% 
-  st_drop_geometry()  # Convert to regular data frame
-data.crop_df
-
-################################################################################
-savedfilename <- paste0("sential_", analysis.type,"_extracted_pts.csv")
-
-location_for_saving <- paste0(headDir,"/10.Analysis/",analysis.yr,'/',analysis.type,"/"
-       ,savedfilename)
-
-write_csv(data.crop_df ,location_for_saving )

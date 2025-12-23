@@ -225,13 +225,23 @@ file1_2 <- file1_2 %>%
   
 str(file1_2)
 ###############################################################################
-########                     Lots of zeros               ######################
+########Lots of zeros ? I think they should be re-coded as NA ##################
 ###############################################################################
 
 file1_2 <- file1_2 %>%
   mutate(across(c(trgt_vr), 
                 ~case_when(. == 0 ~ NA_real_,
                            TRUE ~ .)))
+
+write_sf(file1_2,
+         paste0(headDir,"/10.Analysis/25/Processing_Jackie/", site_name,"_collated_data_raw_", analysis.yr,".shp"))
+
+
+
+
+##I think these steps should come later after the whole dataset is collated
+
+
 
 
 
