@@ -78,7 +78,7 @@ zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
 #analysis.type <- "Harvest" # No data yet
 
 #analysis.type <- "InSeason" ## ? not sure what this is
-analysis.type <- "PeakBiomass" #This is sometimes called biomass, or biomass at flowering
+analysis.type <- "Peak_Biomass" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 # analysis.type <- "PreSeason" ## ? not sure what this is
 
 
@@ -195,7 +195,7 @@ file1 <- st_read(paste0(headDir,"/10.Analysis/25/Processing_Jackie/",
                          data1, "_", analysis.yr,".shp"))  
 
 
-data2 <- "PeakBiomass"
+data2 <- "Peak_Biomass"
 file2 <- st_read(paste0(headDir,"/10.Analysis/25/Processing_Jackie/", 
                         data2, "_", analysis.yr,".shp"))  
 

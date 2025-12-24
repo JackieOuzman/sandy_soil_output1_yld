@@ -25,9 +25,6 @@ headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
 
-# analysis.type <- "Emergence" #Harvest, InSeason, PeakBiomass, PreSeason
-# variable <- "Total"
-# treat.col.name <- "treat_desc"
 
 clean.dat <- "No"
 analysis.yr <- "25"
@@ -190,8 +187,6 @@ list_sentinel_dates_df$date_from_fld_ob1 <- as.double(list_sentinel_dates_df$dat
 list_sentinel_dates_df$date_from_fld_ob2 <- as.double(list_sentinel_dates_df$date_from_fld_ob2)
 
 
-str(nm_df)
-
 date_closeset_to_fld_ob <-  list_sentinel_dates_df %>%
   filter(
     date_from_fld_ob1 == min(date_from_fld_ob1, na.rm = TRUE) |
@@ -236,7 +231,7 @@ Fld_ob1 <- date_closeset_to_fld_ob %>%
   filter(date_from_fld_ob1 == min(date_from_fld_ob1, na.rm = TRUE)) %>% 
   rename(fld_ob = Fld_ob1)
 
-#Fld_ob2 is the PeakBiomass
+#Fld_ob2 is the Peak_Biomass
 Fld_ob2 <- date_closeset_to_fld_ob %>% 
   select(Fld_ob2, sential_dates , date_from_fld_ob2) %>% 
   filter(date_from_fld_ob2 == min(date_from_fld_ob2, na.rm = TRUE))%>% 
@@ -247,7 +242,7 @@ str(collated_data)
 collated_data <- collated_data %>% 
   mutate(sential_dates = case_when(
     fld_ob == "Emergence" ~ Fld_ob1$sential_dates,
-    fld_ob == "PeakBiomass" ~ Fld_ob2$sential_dates
+    fld_ob == "Peak_Biomass" ~ Fld_ob2$sential_dates
   ))
 
 
