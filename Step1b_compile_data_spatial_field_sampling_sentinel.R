@@ -64,9 +64,12 @@ collated_data <- st_read(paste0(headDir,
 
 # ====================== list of bad dates for satellite ======================
 
+
+
 bad_dates <- readxl::read_excel(
   paste0(file.path(headDir, "7.In_Season_data", 
-                   "Sentinel_list_bad_dates.xlsx") ))
+                   file_path_details$bad_dates   )))
+                  
 bad_dates$Dates <- as.character(bad_dates$Dates)
 
 # Convert to a list where each column becomes a list element
@@ -261,3 +264,18 @@ rm(Fld_ob1, Fld_ob2, date_closeset_to_fld_ob)
 ################################################################################
 write_sf(collated_data,
          paste0(headDir,"/10.Analysis/25/Processing_Jackie/", site_name,"_collated_data_raw_sentinel", analysis.yr,".shp"))
+################################################################################
+# Extract coordinates and convert to data frame
+collated_data_df <- collated_data %>%
+  st_drop_geometry() %>%  # Remove geometry column
+  bind_cols(
+    st_coordinates(collated_data) %>%  # Extract coordinates
+      as.data.frame() %>%
+      rename(longitude = X, latitude = Y)  # Rename to meaningful names
+  )
+
+# Write to CSV
+write.csv(collated_data_df,
+          paste0(headDir, "/10.Analysis/25/Processing_Jackie/", 
+                 site_name, "_collated_data_raw_sentinel", analysis.yr, ".csv"),
+          row.names = FALSE)
