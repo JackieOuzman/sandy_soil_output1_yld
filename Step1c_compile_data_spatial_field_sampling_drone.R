@@ -50,14 +50,13 @@ seasons <- readxl::read_excel(
 
 
 ################################################################################
-## Read in field data 
+## Read in field data with the Sential data too
 
 
-collated_data <- st_read(paste0(headDir,
+collated_data_fld_Sent <- st_read(paste0(headDir,
                         "/10.Analysis/25/Processing_Jackie/", 
-                        site_name,"_collated_data_raw_", 
+                        site_name,"_collated_data_raw_sentinel", 
                         analysis.yr,".shp"))
-
 
 ################################################################################
 ################ Read in drone data ########################
@@ -106,7 +105,7 @@ drone.dat1_projected_1m
 
 
 # Transform your shapefile to match the raster CRS
-collated_data_projected <- st_transform(collated_data, crs = 7854)
+collated_data_projected <- st_transform(collated_data_fld_Sent, crs = 7854)
 
 #these projections should match
 collated_data_projected
@@ -119,13 +118,14 @@ extracted_values <- terra::extract(drone.dat1_projected_1m, collated_data_projec
 # Bind all extracted columns to your data (exclude ID column)
 collated_data_projected <- bind_cols(collated_data_projected, extracted_values[, -1])
 # Rename the clm
-collated_data_projected <- collated_data_projected %>% rename(NDVI_drone_20250626 = "...12")
+names(collated_data_projected)
+collated_data_projected <- collated_data_projected %>% rename(NDVI_drone_20250626 = "...14")
 
 names(collated_data_projected)
 
 
 ##tidy up
-rm(collated_data, extracted_values,ext_r)
+rm(collated_data_fld_Sent, extracted_values,ext_r)
 
 
 ################################################################################
@@ -175,13 +175,13 @@ extracted_values2 <- terra::extract(drone.dat2_projected_1m, collated_data_proje
 collated_data_projected <- bind_cols(collated_data_projected, extracted_values2[, -1])
 names(collated_data_projected)
 # Rename the clm
-collated_data_projected <- collated_data_projected %>% rename(NDVI_drone_20251002 = "...13")
+collated_data_projected <- collated_data_projected %>% rename(NDVI_drone_20251002 = "...15")
 
 names(collated_data_projected)
 
 
 ##tidy up
-rm(collated_data, extracted_values,ext_r)
+rm( extracted_values2,ext_r)
 
 ################################################################################
 ## make one clm for the extracted NDVI values, for one emergence use the  NDVI_drone_20250626
@@ -224,10 +224,25 @@ names(collated_data_projected)
 # this has a date of the 9/9/2025 - so the NDVI_drone clm has to be from earlier ie its not the drone data for peak biomass!
 # Ill drop it:)
 
-collated_data_projected <- collated_data_projected %>% select(-NDVI_drone)
+collated_data_projected <- collated_data_projected %>% select(-NDVI_dr)
 collated_data_projected <- collated_data_projected %>% rename("NDVI_Drone"  = "NDVI_Drone_2"   )
 
 
 ################################################################################
 write_sf(collated_data_projected,
-         paste0(headDir,"/10.Analysis/25/Processing_Jackie/", site_name,"_collated_data_raw_drone", analysis.yr,".shp"))
+         paste0(headDir,"/10.Analysis/25/Processing_Jackie/", site_name,"_collated_data_raw_Sen_drone", analysis.yr,".shp"))
+################################################################################
+# Extract coordinates and convert to data frame
+collated_data_df <- collated_data_projected %>%
+  st_drop_geometry() %>%  # Remove geometry column
+  bind_cols(
+    st_coordinates(collated_data_projected) %>%  # Extract coordinates
+      as.data.frame() %>%
+      rename(longitude = X, latitude = Y)  # Rename to meaningful names
+  )
+
+# Write to CSV
+write.csv(collated_data_df,
+          paste0(headDir, "/10.Analysis/25/Processing_Jackie/", 
+                 site_name, "_collated_data_raw_sentinel_done", analysis.yr, ".csv"),
+          row.names = FALSE)
