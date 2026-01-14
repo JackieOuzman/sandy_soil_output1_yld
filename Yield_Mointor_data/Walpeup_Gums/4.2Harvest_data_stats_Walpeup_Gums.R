@@ -14,59 +14,140 @@ library(broom)
 library(multcompView)
 library(lubridate)
 
+
+################################################################################
+########################            Define the directory              ##########
+################################################################################
+
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
+headDir <- paste0(dir, "/work/Output-1/", site_number)
 
-headDir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}/work/Output-1/1.Walpeup_MRS125"
+analysis.type <- "Harvest"
 
-analysis.type <- "Harvest" #Emergence, InSeason, PeakBiomass, PreSeason
+
+clean.dat <- "No"
+analysis.yr <- "25"
+
+
+metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
+metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
+
+crs_used <- 4326
+################################################################################
+########################    Read in metadata info file names and path ##########
+################################################################################
+
+file_path_details <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "location of file and details") %>% 
+  filter(Site == site_number)
+
+seasons <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "seasons") %>% 
+  filter(Site == site_number)
+
+harvest_data_file <-  readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "Harvest_data") %>% 
+  filter(Site == site_number)
+
+
+################################################################################
+
+## get the list of all the file options
+harvest_files_all_options <- list.files(path = paste0(headDir, "/", harvest_data_file$files))
+harvest_files_all_options
+
+## select which file I will use
+harvest_files <- list.files(path = paste0(headDir, "/", harvest_data_file$files), pattern = ".shp")
+harvest_files
+
+# Load the file 
+harvest_raw <- st_read(
+  paste0(headDir,"/", harvest_data_file$files,harvest_files))
+plot(harvest_raw)
+
+#############
+## work out which clm to use 
+
+harvest_raw
+names(harvest_raw)
+
+harvest_raw %>%
+  select(VRYIELDMAS, WetMass, Moisture, DRYMATTER) %>%
+  st_drop_geometry() %>%
+  summary()
+
+#Looks like VRYIELDMAS, WetMass are almost the same... use VRYIELDMAS
+
+
+#############
+## work out projection
+
+# Check current CRS (Coordinate Reference System)
+st_crs(harvest_raw)
+# ===== FIX THE CRS METADATA =====
+# Your shapefile has WGS84 but with malformed metadata
+# Reset it to proper WGS84
+
+harvest_raw <- st_set_crs(harvest_raw, 4326)
+# Alternative: GDA2020 / MGA Zone 54 (Australian standard for the area)
+harvest_raw_mga <- st_transform(harvest_raw, 7854)
+
+
+################################################################################
 
 ## Read in data
-boundary <- st_read(paste0(headDir,'/1.Paddock_Boundary/Walpeup_MRS125_Boundary_Masked_4326.shp'))
-strips <- st_read(paste0(headDir,"/5.Trial_Plan/FINAL-Trial-Plan/GIS/MRS125_Strips_FINAL_wgs84.shp"))
+boundary   <- st_read(file.path(headDir, file_path_details$boundary))
+strips <-     st_read(file.path(headDir, file_path_details$trial.plan))
+strips <- st_make_valid(strips) #Checks whether a geometry is valid, or makes an invalid geometry valid
+
 #data.raw <- st_read(paste0(headDir,'/7.In_Season_data/24/4.Biomass/Biomass_NDVI_Walpeup_2024_merged_data.gpkg'))
 
-zones <- rast(paste0(headDir,'/3.Covariates/6.Clusters_Zones/FINAL/MRS125_NEWZONES_round_wgs84.tif'))
-zones <- terra::project(zones,'epsg:4326',method='near')
+zones <- rast(paste0(file.path(headDir, file_path_details$`location of zone tif`)))
+zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
 
-# zones.2 <- rast(paste0(headDir,'/3.Covariates/6.Clusters_Zones/FINAL/MRS125_Zones_round_wgs84.tif'))
-# zones <- zones.2
 
-data.raw.4326 <- st_read(paste0(headDir,"/8.Yield_Data/25/Raw/Export_20251209_1025_mrs125_25yield/doc/Lowan Ridge_Lowan Ridge_MRS 125new_Harvest_2025-12-07_00.shp"))
-data.raw <- data.raw.4326
-
+#################################################################################
+data.raw <- harvest_raw
 strips <- st_make_valid(strips)
 strips <- strips %>%
   mutate(treat_desc = ifelse(treat_desc == "Control (-Tillage -Lime)", "Control", treat_desc))
 
-zone_desc <- c("1" = "Transition", "2" = "Dune","3" = "Swale")  # others keep their ID
-zone_labeller <- ggplot2::labeller(
-  zone_id = function(z) {
-    zc <- as.character(z)
-    desc <- zone_desc[zc]
-    ifelse(is.na(desc), zc, paste0(zc, " — ", desc))
-  }
-)
 
-seasons <- tribble(
-  ~year, ~crop_type, ~plant_date,   ~harvest_date,
-  2024, "Lentils",  "29/05/2024",  NA_character_,
-  2025, "Wheat",    "27/04/2025",  NA_character_,
-  2026, NA,         NA_character_, NA_character_,
-  2027, NA,         NA_character_, NA_character_
-) %>%
-  mutate(
-    year         = as.integer(year),
-    plant_date   = dmy(plant_date),
-    harvest_date = dmy(harvest_date)
-  )
 
-site.info <- list(
-  site_id    = "Walpeup_MRS125",
-  boundary   = boundary,      # sf
-  trial_plan = strips,    # sf
-  seasons    = seasons        # tibble
-)
-class(site.info) <- c("ssii_site", class(site.info))
+# zone_desc <- c("1" = "Transition", "2" = "Dune","3" = "Swale")  # others keep their ID
+# zone_labeller <- ggplot2::labeller(
+#   zone_id = function(z) {
+#     zc <- as.character(z)
+#     desc <- zone_desc[zc]
+#     ifelse(is.na(desc), zc, paste0(zc, " — ", desc))
+#   }
+# )
+# 
+# seasons <- tribble(
+#   ~year, ~crop_type, ~plant_date,   ~harvest_date,
+#   2024, "Lentils",  "29/05/2024",  NA_character_,
+#   2025, "Wheat",    "27/04/2025",  NA_character_,
+#   2026, NA,         NA_character_, NA_character_,
+#   2027, NA,         NA_character_, NA_character_
+# ) %>%
+#   mutate(
+#     year         = as.integer(year),
+#     plant_date   = dmy(plant_date),
+#     harvest_date = dmy(harvest_date)
+#   )
+# 
+# site.info <- list(
+#   site_id    = "Walpeup_MRS125",
+#   boundary   = boundary,      # sf
+#   trial_plan = strips,    # sf
+#   seasons    = seasons        # tibble
+# )
+# class(site.info) <- c("ssii_site", class(site.info))
 
 ################################################################################
 ## Step 1) Define variables
@@ -173,6 +254,9 @@ names(sig.out)[1] <- treat.col.name
 summary_stats.2 <- inner_join(summary_stats,sig.out, by  = treat.col.name)
 print(summary_stats.2)
 
+
+
+
 write.csv(summary_stats.2,paste0(headDir,'/10.Analysis/25/',analysis.type,'/summary-stats-whole-pdk.csv'))
 
 ################################################################################
@@ -209,14 +293,16 @@ site.bar.plot <- ggplot(summary_stats, aes(x = !!sym(treat.col.name), y = median
 # Print the plot
 site.bar.plot
 
-#ggsave(paste0(headDir,"/10.Analysis/25/Emergence/emergence-plot-whole-pdk.png"),site.bar.plot)
 
+ggsave(paste0(headDir,"/10.Analysis/25/",analysis.type,"/summary-plot-whole-pdk.png"), site.bar.plot)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%% By Zone Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ################################################################################
 ## Step 6) Compute summary statistics by zone
+
+unique(all.dat$zone)
 
 for(i in 1:length(unique(all.dat$zone))){
   df <- all.dat %>%
@@ -282,6 +368,16 @@ summary_stats <- df %>%
     .groups = "drop"
   )
 
+zone_desc <- c("1" = "Transition", "2" = "Dune","3" = "Swale")  # others keep their ID
+zone_labeller <- ggplot2::labeller(
+  zone_id = function(z) {
+    zc <- as.character(z)
+    desc <- zone_desc[zc]
+    ifelse(is.na(desc), zc, paste0(zc, " — ", desc))
+  }
+)
+
+
 
 zone.bar.plot <- summary_stats %>%
   dplyr::rename(zone_id = zone) %>%
@@ -319,7 +415,7 @@ zone.bar.plot <- summary_stats %>%
 
 zone.bar.plot
 
-
+ggsave(paste0(headDir,"/10.Analysis/25/",analysis.type,"/summary-plot-zones-pdk.png"), zone.bar.plot)
 
 
 
