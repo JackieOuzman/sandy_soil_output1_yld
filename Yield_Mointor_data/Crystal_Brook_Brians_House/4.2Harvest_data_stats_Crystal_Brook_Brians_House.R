@@ -13,6 +13,7 @@ library(tidyr)
 library(broom)
 library(multcompView)
 library(lubridate)
+library(readr)
 
 
 ################################################################################
@@ -20,8 +21,8 @@ library(lubridate)
 ################################################################################
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+site_number <- "2.Crystal_Brook_Brians_House"
+site_name <- "Crystal_Brook_Brians_House"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 analysis.type <- "Harvest"
@@ -62,12 +63,21 @@ harvest_files_all_options <- list.files(path = paste0(headDir, "/", harvest_data
 harvest_files_all_options
 
 ## select which file I will use
-harvest_files <- list.files(path = paste0(headDir, "/", harvest_data_file$files), pattern = ".shp")
+harvest_files <- list.files(path = paste0(headDir, "/", harvest_data_file$files), pattern = ".csv")
 harvest_files
 
 # Load the file 
-harvest_raw <- st_read(
+# harvest_raw <- st_read(
+#   paste0(headDir,"/", harvest_data_file$files,harvest_files))
+harvest_raw_df <- read_csv(
   paste0(headDir,"/", harvest_data_file$files,harvest_files))
+harvest_raw_df
+
+harvest_raw <- st_as_sf(harvest_raw_df, 
+                  coords = c("Longitude", "Latitude"),
+                  crs = 4326)  # WGS84 (standard lat/lon)
+
+
 plot(harvest_raw)
 
 #############
@@ -77,11 +87,11 @@ harvest_raw
 names(harvest_raw)
 
 harvest_raw %>%
-  select(VRYIELDMAS, WetMass, Moisture, DRYMATTER) %>%
+  select(`Mass Yield`, `Wet Yield`, `Dry Yield`) %>%
   st_drop_geometry() %>%
   summary()
 
-#Looks like VRYIELDMAS, WetMass are almost the same... use VRYIELDMAS
+#Looks like `Wet Yield` and  `Dry Yield`, are almost the same... use `Dry Yield`
 
 
 #############
@@ -124,7 +134,7 @@ strips <- strips %>%
 ################################################################################
 ## Step 1) Define variables
 ## Define variable in data to analyse
-variable <- "VRYIELDMAS"
+variable <- "Dry Yield"
 
 ## Define treatment column name in strips
 treat.col.name <- "treat_desc"
