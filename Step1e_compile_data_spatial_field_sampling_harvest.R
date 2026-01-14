@@ -196,7 +196,7 @@ ggplot() +
   theme(legend.position = "right")
 
 
-############ Extract values based on location ie the closest point
+############ Extract values based on location ie the closest point and reports on the distance between points
 
 # Ensure both datasets have the same CRS
 harvest_raw_mga_VRYIELDMAS_trim1
@@ -222,7 +222,53 @@ distances <- st_distance(
   harvest_raw_mga_VRYIELDMAS_trim1[nearest_indices, ],
   by_element = TRUE
 )
-
 # Add distance column to extracted values
 extracted_values <- extracted_values %>%
   mutate(distance_m = as.numeric(distances))
+
+
+############ Extract values based on location but using a buffer
+
+# Ensure both datasets have the same CRS
+harvest_raw_mga_VRYIELDMAS_trim1
+collated_data_fld_Sent_drone_planet
+
+# Set buffer distance (in meters, adjust as needed)
+buffer_distance <- 5  # 5 meters
+
+# Create buffers around drone points
+samplint_pts_buffers <- st_buffer(collated_data_fld_Sent_drone_planet, dist = buffer_distance)
+
+# Spatial join to find all harvest points within each buffer
+extracted_values_buffer <- st_join(
+  samplint_pts_buffers,
+  harvest_raw_mga_VRYIELDMAS_trim1,
+  join = st_intersects
+)
+
+
+# Check for sampling points with no matches
+names(extracted_values_buffer)
+extracted_values_buffer <- extracted_values_buffer %>% 
+  mutate(pt_id_fld_ob = paste0(pt_id, fld_ob) )
+points_per_sampling_location  <- extracted_values_buffer %>%
+  st_drop_geometry() %>%
+  group_by(pt_id_fld_ob) %>%  
+  tally()
+points_per_sampling_location
+
+
+
+# Calculate statistics for each sampling point
+extracted_summary <- extracted_values_buffer %>%
+  st_drop_geometry() %>%
+  group_by(pt_id_fld_ob) %>%  
+  summarise(
+    mean_VRYIELDMAS = mean(VRYIELDMAS, na.rm = TRUE),
+    median_VRYIELDMAS = median(VRYIELDMAS, na.rm = TRUE),
+    sd_VRYIELDMAS = sd(VRYIELDMAS, na.rm = TRUE),
+    min_VRYIELDMAS = min(VRYIELDMAS, na.rm = TRUE),
+    max_VRYIELDMAS = max(VRYIELDMAS, na.rm = TRUE),
+    n_harvest_points = n(),
+    .groups = 'drop'
+  )
