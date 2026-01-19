@@ -13,6 +13,8 @@ library(tidyr)
 library(broom)
 library(multcompView)
 library(lubridate)
+library(terra)
+library(tidyterra)
 
 
 ################################################################################
@@ -118,6 +120,85 @@ strips <- strips %>%
   mutate(treat_desc = ifelse(treat_desc == "Control (-Tillage -Lime)", "Control", treat_desc))
 
 
+
+#################################################################################
+## Plot of yield data - trace with strips etc
+names(harvest_raw_mga)
+
+strips_raw_mga <- st_transform(strips, 7854)
+strips_raw_mga
+
+zones
+zones_mga <- project(zones, "EPSG:7854")  # Your raster name might be different
+
+zones_df <- as.data.frame(zones_mga, xy = TRUE)
+
+
+## This is to get around some labelling problem with 2 B - buffers
+strips_raw_mga <- strips_raw_mga %>%
+  group_by(treat) %>%
+  mutate(treat_label = paste0(treat, row_number())) %>%
+  ungroup()
+
+
+raw_harvest_data <- ggplot() +
+  geom_raster(data = zones_df, aes(x = x, y = y, fill = factor(cluster3)), alpha = 0.4) +
+  geom_sf(data = harvest_raw_mga, color = "black", size = 0.3, alpha = 0.8) +
+  geom_sf(data = strips_raw_mga, color = "blue", fill = NA, size = 1) +
+  geom_sf_label(data = strips_raw_mga, aes(label = treat_label), 
+                size = 2.5, fontface = "bold",
+                nudge_y = 500) +
+  scale_fill_manual(
+    name = "Zone",
+    values = c("1" = "#FFB3BA", "2" = "#BAFFC9", "3" = "#BAE1FF")
+  ) +
+  coord_sf() +
+  theme_minimal() +
+  theme_void() +
+  labs(title = "Raw harvest data with management zones and strips")
+raw_harvest_data
+
+bbox <- st_bbox(strips_raw_mga)
+
+zoom_raw_harvest_data <- ggplot() +
+  geom_raster(data = zones_df, aes(x = x, y = y, fill = factor(cluster3)), alpha = 0.4) +
+  geom_sf(data = harvest_raw_mga, color = "black", size = 0.3, alpha = 0.5) +
+  geom_sf(data = strips_raw_mga, color = "blue", fill = NA, size = 1) +
+  geom_sf_label(data = strips_raw_mga, aes(label = treat_label), 
+                size = 2.5, fontface = "bold"#,
+                #nudge_y = 500
+                ) +
+  scale_fill_manual(
+    name = "Zone",
+    values = c("1" = "#FFB3BA", "2" = "#BAFFC9", "3" = "#BAE1FF")
+  ) +
+  coord_sf(xlim = c(bbox["xmin"] - 5, bbox["xmax"] + 5),
+           ylim = c(bbox["ymin"] - 5, bbox["ymax"] + 5),
+           expand = FALSE) +
+  theme_minimal() +
+  theme_void() +
+  labs(title = "Raw harvest data with management zones and strips")
+
+zoom_raw_harvest_data
+
+##### some information on the number of points in each treatment and zone
+
+## assign each harvest point to a cluster
+harvest_raw_mga
+zones_mga 
+
+harvest_raw_zones <- terra::extract(zones_mga, vect(harvest_raw_mga))
+
+harvest_raw_mga$cluster3 <- harvest_raw_zones$cluster3 # heaps of missing data
+boundary_raw_mga <- st_transform(boundary, 7854)
+
+harvest_filtered <- st_filter(harvest_raw_mga, strips_raw_mga)
+
+ggplot() +
+  geom_sf(data = harvest_filtered, color = "black", size = 0.3, alpha = 0.5) 
+
+#umm still have NA why is this
+################################################################################
 
 # zone_desc <- c("1" = "Transition", "2" = "Dune","3" = "Swale")  # others keep their ID
 # zone_labeller <- ggplot2::labeller(
