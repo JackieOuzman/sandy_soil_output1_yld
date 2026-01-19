@@ -218,6 +218,22 @@ harvest_filtered <- st_join(harvest_filtered,
                             strips_raw_mga["treat_label"], 
                             join = st_within)
 
+### get the full name of the treatments
+harvest_filtered <- harvest_filtered %>% 
+  mutate(treat_desc = case_when(
+    treat_label ==  "B1" ~	"Buffer",
+    treat_label =="B2"~	"Buffer",
+    treat_label =="C1"~	"Control",
+    treat_label =="L1"~	"Lime Control (3t)",
+    treat_label =="R1"~	"Rip",
+    treat_label =="RL1"	~ "Rip + Lime (3t)",
+    treat_label =="S1"~	"Spade",
+    treat_label =="SL1"	~ "Spade + Lime (3t)",
+    treat_label =="SR1"~	"Spade + Rip",
+    treat_label =="SRL1"~	"Spade + Rip + Lime (3t)",
+
+    .default = "other"
+  ))
 
 ### count how many raw harvest point are in each treatment strip and cluster
 
@@ -228,6 +244,22 @@ harvest_filtered_counts <- harvest_filtered %>%
   group_by(treat_label, cluster3 ) %>% 
   summarise(count = n(), .groups = 'drop')
 
+
+harvest_filtered_counts <- harvest_filtered_counts %>% 
+  mutate(treat_desc = case_when(
+    treat_label ==  "B1" ~	"Buffer",
+    treat_label =="B2"~	"Buffer",
+    treat_label =="C1"~	"Control",
+    treat_label =="L1"~	"Lime Control (3t)",
+    treat_label =="R1"~	"Rip",
+    treat_label =="RL1"	~ "Rip + Lime (3t)",
+    treat_label =="S1"~	"Spade",
+    treat_label =="SL1"	~ "Spade + Lime (3t)",
+    treat_label =="SR1"~	"Spade + Rip",
+    treat_label =="SRL1"~	"Spade + Rip + Lime (3t)",
+    
+    .default = "other"
+  ))
 
 harvest_filtered_counts
 
