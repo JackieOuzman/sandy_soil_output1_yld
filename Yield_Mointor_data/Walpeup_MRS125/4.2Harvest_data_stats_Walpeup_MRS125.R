@@ -129,12 +129,12 @@ strips_raw_mga <- st_transform(strips, 7854)
 strips_raw_mga
 
 zones
-zones_mga <- project(zones, "EPSG:7854")  # Your raster name might be different
+zones_mga <- project(zones, "EPSG:7854")  # 
 
 zones_df <- as.data.frame(zones_mga, xy = TRUE)
 
 
-## This is to get around some labelling problem with 2 B - buffers
+## This is to get around some labeling problem with 2 B - buffers
 strips_raw_mga <- strips_raw_mga %>%
   group_by(treat) %>%
   mutate(treat_label = paste0(treat, row_number())) %>%
@@ -190,14 +190,47 @@ zones_mga
 harvest_raw_zones <- terra::extract(zones_mga, vect(harvest_raw_mga))
 
 harvest_raw_mga$cluster3 <- harvest_raw_zones$cluster3 # heaps of missing data
-boundary_raw_mga <- st_transform(boundary, 7854)
+
 
 harvest_filtered <- st_filter(harvest_raw_mga, strips_raw_mga)
+harvest_filtered %>%  distinct(cluster3)
+str(harvest_filtered$cluster3)
+
+harvest_filtered$cluster3 <- as.factor(round(harvest_filtered$cluster3))
+
+
+## subset data
+names(harvest_filtered)
+harvest_filtered <- harvest_filtered %>% select(DISTANCE, Time, Moisture, VRYIELDMAS,geometry, cluster3 )
 
 ggplot() +
-  geom_sf(data = harvest_filtered, color = "black", size = 0.3, alpha = 0.5) 
+  geom_sf(data = harvest_filtered, aes(color = as.factor(cluster3)), size = 0.3, alpha = 0.5) +
+  scale_color_discrete(name = "Cluster") +
+  geom_sf(data = strips_raw_mga, color = "blue", fill = NA, size = 1) +
+  
+  theme_minimal()+
+  theme_void() +
+  labs(title = "Raw harvest data with management zones and strips")
 
-#umm still have NA why is this
+
+# Perform spatial join - points inherit attributes from polygons they fall within
+harvest_filtered <- st_join(harvest_filtered, 
+                            strips_raw_mga["treat_label"], 
+                            join = st_within)
+
+
+### count how many raw harvest point are in each treatment strip and cluster
+
+
+harvest_filtered_counts <- harvest_filtered %>% 
+  st_drop_geometry() %>%
+  filter(!is.na(cluster3), !is.na(treat_label)) %>%
+  group_by(treat_label, cluster3 ) %>% 
+  summarise(count = n(), .groups = 'drop')
+
+
+harvest_filtered_counts
+
 ################################################################################
 
 # zone_desc <- c("1" = "Transition", "2" = "Dune","3" = "Swale")  # others keep their ID
