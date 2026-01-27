@@ -79,11 +79,15 @@ harvest_file_path <- paste0(headDir, "/",
                              subfolder1,"/",
                              subfolder2,"/")
 
-
+harvest_files_options2
 harvest_file_path
 
 
 # Load the file 
+
+
+
+
 
 harvest_raw <- st_read(paste0(harvest_file_path, harvest_files_options2)) 
  
@@ -110,7 +114,7 @@ harvest_raw_df <- harvest_raw
 ##subset the data
 names(harvest_raw_df)
 harvest_raw_df <- harvest_raw_df %>% 
-  select(VRYIELDMAS, "treat"  ,    "treat_desc" ,"gridcode", "treat_id")
+  select(VRYIELDMAS, "treat"  ,    "treat_desc" ,"gridcode", "treat_id", "POINT_X", "POINT_Y")
 names(harvest_raw_df)
 
 ################################################################################
@@ -134,16 +138,20 @@ model <- "XGBoost" #"Random Forest
 ###############################################################################
 
 
-## cleaning
+## cleaning and trimming
 
 rm(harvest_raw)
 str(harvest_raw_df)
 
 harvest_raw_df <- harvest_raw_df %>% rename("target.variable" = VRYIELDMAS)
 
+harvest_raw_df <- harvest_raw_df %>% filter(target.variable > 0)
+
+
 # Calculate bounds and filter for each treatment
 data.clean <- harvest_raw_df %>%
-  group_by(treat_id) %>%
+  #group_by(treat_id) %>% if you want the buffered seperate
+  group_by(treat_desc) %>%
   mutate(
     Q1 = quantile(target.variable, 0.25),
     Q3 = quantile(target.variable, 0.75),
@@ -260,14 +268,22 @@ write.csv(summary_stats.2,
                  "/",subfolder2,
                  '/summary-stats-whole-pdk.csv'))
 
+write.csv(df,
+          paste0(headDir,'/10.Analysis/25/',analysis.type,
+                 "/",subfolder1,
+                 "/",subfolder2,
+                 '/clean_trim.csv'))
+
 ################################################################################
 ## Step 5) Make a ggplot
 
 # Compute summary statistics (median, 25th, and 75th percentiles)
 #mean, instead of median
+str(df)
+
 summary_stats <- df %>%
+  #group_by( treat_id) %>% # if you want the buffers sep
   group_by( treat_desc) %>%
-  #group_by(!!sym(treat.col.name)) %>%
   summarise(
     mean = mean(target.variable, na.rm = TRUE),
     Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
