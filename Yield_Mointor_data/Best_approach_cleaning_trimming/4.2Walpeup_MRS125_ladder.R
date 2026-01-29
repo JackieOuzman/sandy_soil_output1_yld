@@ -141,9 +141,9 @@ harvest_raw_spatial <- st_as_sf(harvest_raw_df,
                        crs = 28354)  # Recommended CRS for Walpeup EPSG:7855 - GDA2020 / MGA zone 54
 
 
-
+harvest_raw_spatial
 ################################################################################
-### Load in the ladders that I made in Arcmap
+### Load in the ladders that I made in qgis using Christina tools
 
 ladders_files <- list.files(path =
                                        paste0(headDir, "/", 
@@ -151,7 +151,7 @@ ladders_files <- list.files(path =
                                               analysis.yr,"/",
                                               analysis.type,"/",
                                               subfolder1,"/",
-                                              subfolder2,"/"
+                                              subfolder2,"/qgis/"
                                        ), 
                                      pattern = ".shp")
 ladder_file_path <- paste0(headDir, "/", 
@@ -159,139 +159,34 @@ ladder_file_path <- paste0(headDir, "/",
                             analysis.yr,"/",
                             analysis.type,"/",
                             subfolder1,"/",
-                            subfolder2,"/")
+                           subfolder2,"/qgis/")
 
 ladders_files
 ladder_file_path
 unique(harvest_raw_spatial$treat)
 
-ladders_filesB <- list.files(path =
+ladders_files_qgis <- list.files(path =
                               paste0(headDir, "/", 
                                      "10.Analysis/",
                                      analysis.yr,"/",
                                      analysis.type,"/",
                                      subfolder1,"/",
-                                     subfolder2,"/"
+                                     subfolder2,"/qgis/"
                               ), 
-                            pattern = "B\\.shp$")
-########################################################
-ladders_filesR <- list.files(path =
-                               paste0(headDir, "/", 
-                                      "10.Analysis/",
-                                      analysis.yr,"/",
-                                      analysis.type,"/",
-                                      subfolder1,"/",
-                                      subfolder2,"/"
-                               ), 
-                             pattern = "R\\.shp$")
-# Remove any that aren't exactly .shp
-ladders_filesR <- ladders_filesR[!grepl("SR\\.shp$", ladders_filesR)]
-########################################################
-ladders_filesRL <- list.files(path =
-                               paste0(headDir, "/", 
-                                      "10.Analysis/",
-                                      analysis.yr,"/",
-                                      analysis.type,"/",
-                                      subfolder1,"/",
-                                      subfolder2,"/"
-                               ), 
-                             pattern = "RL\\.shp$")
-# Remove any that aren't exactly .shp
-ladders_filesRL <- ladders_filesRL[!grepl("SRL\\.shp$", ladders_filesRL)]
+                            pattern = "poly\\.shp$")
+
+ladders_files_qgis
 
 ########################################################
-ladders_filesSL <- list.files(path =
-                                paste0(headDir, "/", 
-                                       "10.Analysis/",
-                                       analysis.yr,"/",
-                                       analysis.type,"/",
-                                       subfolder1,"/",
-                                       subfolder2,"/"
-                                ), 
-                              pattern = "SL\\.shp$")
-# Remove any that aren't exactly .shp
-########################################################
-ladders_filesS <- list.files(path =
-                                paste0(headDir, "/", 
-                                       "10.Analysis/",
-                                       analysis.yr,"/",
-                                       analysis.type,"/",
-                                       subfolder1,"/",
-                                       subfolder2,"/"
-                                ), 
-                              pattern = "S\\.shp$")
-# Remove any that aren't exactly .shp
 
-
-########################################################
-ladders_filesL <- list.files(path =
-                               paste0(headDir, "/", 
-                                      "10.Analysis/",
-                                      analysis.yr,"/",
-                                      analysis.type,"/",
-                                      subfolder1,"/",
-                                      subfolder2,"/"
-                               ), 
-                             pattern = "L\\.shp$")
-# Remove any that aren't exactly .shp
-ladders_filesL <- ladders_filesL[!grepl("LR\\.shp$", ladders_filesL)]
-ladders_filesL <- ladders_filesL[!grepl("RL\\.shp$", ladders_filesL)]
-ladders_filesL <- ladders_filesL[!grepl("SL\\.shp$", ladders_filesL)]
-ladders_filesL <- ladders_filesL[!grepl("SRL\\.shp$", ladders_filesL)]
-ladders_filesL <- ladders_filesL[!grepl("Strip_SRL\\.shp$", ladders_filesL)]
-ladders_filesL <- ladders_filesL[!grepl("yld_pts_SRL\\.shp$", ladders_filesL)]
-########################################################
-ladders_filesSRL <- list.files(path =
-                               paste0(headDir, "/", 
-                                      "10.Analysis/",
-                                      analysis.yr,"/",
-                                      analysis.type,"/",
-                                      subfolder1,"/",
-                                      subfolder2,"/"
-                               ), 
-                             pattern = "SRL\\.shp$")
-# Remove any that aren't exactly .shp
-ladders_filesSRL <- ladders_filesSRL[!grepl("Strip_SRL\\.shp$", ladders_filesSRL)]
-ladders_filesSRL <- ladders_filesSRL[!grepl("yld_pts_SRL\\.shp$", ladders_filesSRL)]
-
-
-########################################################
-ladders_filesSR <- list.files(path =
-                                 paste0(headDir, "/", 
-                                        "10.Analysis/",
-                                        analysis.yr,"/",
-                                        analysis.type,"/",
-                                        subfolder1,"/",
-                                        subfolder2,"/"
-                                 ), 
-                               pattern = "SR\\.shp$")
-# Remove any that aren't exactly .shp
-
-
-########################################################
-ladders_filesC <- list.files(path =
-                                paste0(headDir, "/", 
-                                       "10.Analysis/",
-                                       analysis.yr,"/",
-                                       analysis.type,"/",
-                                       subfolder1,"/",
-                                       subfolder2,"/"
-                                ), 
-                              pattern = "C\\.shp$")
-# Remove any that aren't exactly .shp
-
-#Bring in all the ladders for each treatment
-
-ladders_B <- st_read(paste0(ladder_file_path, ladders_filesB)) 
-ladders_R <- st_read(paste0(ladder_file_path, ladders_filesR)) 
-ladders_RL <- st_read(paste0(ladder_file_path, ladders_filesRL)) 
-ladders_SL <- st_read(paste0(ladder_file_path, ladders_filesSL))
-ladders_S <- st_read(paste0(ladder_file_path, ladders_filesS))
-ladders_L <- st_read(paste0(ladder_file_path, ladders_filesL))
-ladders_SRL <- st_read(paste0(ladder_file_path, ladders_filesSRL))
-ladders_SR <- st_read(paste0(ladder_file_path, ladders_filesSR))
-ladders_C <- st_read(paste0(ladder_file_path, ladders_filesC))
-
+ladders_qgis <- st_read(paste0(ladder_file_path, ladders_files_qgis))
+plot(ladders_qgis)
+str(ladders_qgis)
+## what is plot?should match the treatments numbers are a bit weird ie they are not sequential 
+unique(ladders_qgis$plot)
+## what do I want to keep?
+#treat, trialwidth, PointID, DistOnLine
+ladders_qgis <- ladders_qgis %>% select(treat, trialwidth, PointID, DistOnLine)
 
 
 ################################################################################
@@ -299,24 +194,39 @@ ladders_C <- st_read(paste0(ladder_file_path, ladders_filesC))
 ### add ladder ID to yield data
 # Spatial join - adds polygon attributes to points
 
-harvest_clipped_SRL <- st_intersection(harvest_raw_spatial, 
-                                   st_union(ladders_SRL))
-plot(harvest_clipped_SRL)
-yld_data_with_SRL <- st_join(harvest_clipped_SRL, ladders_SRL, join = st_within)
+harvest_clipped <- st_intersection(harvest_raw_spatial, 
+                                   st_union(ladders_qgis))
+plot(harvest_clipped)
+str(harvest_clipped)
 
-yld_data_with_SRL <- yld_data_with_SRL %>% rename(Ladder_Id = Id,
-                                                  zone = gridcode)
+yld_data_with_ladders <- st_join(harvest_clipped, ladders_qgis, join = st_within)
 
+str(yld_data_with_ladders)
 
-yld_data_with_SRL_summary <- yld_data_with_SRL %>% 
-  group_by(Ladder_Id, treat, treat_id, treat_desc) %>% 
+yld_data_with_ladders <- yld_data_with_ladders %>% rename(Ladder_PointID = PointID,
+                                                  zone = gridcode,
+                                                  treat = treat.x ) %>% 
+  select(- treat.y)
+## the ladderID is the same number acrosss all treatments
+
+yld_data_with_ladders <- yld_data_with_ladders %>% 
+  mutate(treat_Ladder_PointID = paste0(treat, "_", Ladder_PointID))
+
+str(yld_data_with_ladders)
+
+yld_data_with_summary <- yld_data_with_ladders %>% 
+  group_by(treat_Ladder_PointID, treat, treat_id, treat_desc, Ladder_PointID) %>% 
   summarise(mean_yld = mean(VRYIELDMAS, na.rm = TRUE),
+            mean_zone = round(mean(zone, na.rm = TRUE)),
+            n_yld_pt = n(),
             .groups = "drop")  # This automatically keeps geometry for sf objects
 
 # Convert MULTIPOINT to centroid POINT
-yld_data_with_SRL_summary_pt <- yld_data_with_SRL_summary %>% 
+yld_data_with_summary_pt <- yld_data_with_summary %>% 
   st_centroid()
-plot(yld_data_with_SRL_summary_pt)
+plot(yld_data_with_summary_pt)
+str(yld_data_with_summary_pt)
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%% General Stats - Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -324,19 +234,19 @@ plot(yld_data_with_SRL_summary_pt)
 
 ################################################################################
 ## Step 4) Compute summary statistics for whole of field
-
-df <- harvest_raw_df
-unique(harvest_raw_df$treat_desc)
-unique(harvest_raw_df$treat)
+### rename the df so the scripts will run
+df <- yld_data_with_summary_pt
+unique(df$treat_desc)
 names(df)
 str(df)
 
-df <-  dplyr::rename(df, target.variable = VRYIELDMAS )
+df <-  dplyr::rename(df, target.variable = mean_yld  )
 str(df)
 
 
 
 summary_stats <- df %>%
+  st_drop_geometry() %>%  # Remove spatial geometry
   group_by(treat) %>%
   summarize(
     mean = mean(target.variable, na.rm = TRUE),
@@ -344,12 +254,12 @@ summary_stats <- df %>%
     min = min(target.variable, na.rm = TRUE),
     max = max(target.variable, na.rm = TRUE),
     median = median(target.variable, na.rm = TRUE),
-    target.variable = n()
+    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
+    Q3 = quantile(target.variable, 0.75, na.rm = TRUE),
+    n = n()  # Move this to the end and rename it
   )
 
-
-
-
+summary_stats
 
 # Create control group
 control_group <- df %>%
@@ -406,7 +316,12 @@ print(summary_stats.2)
 
 ## add the detailed version of the treatments names
 str(df)
-list_treatments <- df %>% dplyr::distinct(treat, .keep_all = TRUE) %>% select(-target.variable,-gridcode )
+list_treatments <- df %>% 
+  st_drop_geometry() %>%  # Remove spatial geometry
+  dplyr::distinct(treat, .keep_all = TRUE) %>% 
+  select(treat, treat_id, treat_desc)
+
+
 
 
 summary_stats.2 <- left_join(summary_stats.2, list_treatments)
@@ -415,50 +330,38 @@ summary_stats.2 <- left_join(summary_stats.2, list_treatments)
 write.csv(summary_stats.2,
           paste0(headDir,'/10.Analysis/25/',analysis.type,
                  "/",subfolder1,
-                 "/",subfolder2,
+                 "/",subfolder2,"/qgis",
                  '/summary-stats-whole-pdk.csv'))
 
 ################################################################################
 ## Step 5) Make a ggplot
 
-# Compute summary statistics (median, 25th, and 75th percentiles)
-#mean, instead of median
-summary_stats <- df %>%
-  group_by( treat_desc) %>%
-  #group_by(!!sym(treat.col.name)) %>%
-  summarise(
-    mean = mean(target.variable, na.rm = TRUE),
-    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
-    Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
-  )
-
-summary_stats
-summary_stats.2
-summary_stats <- left_join(summary_stats, summary_stats.2)
 
 # Create the bar plot
-summary_stats
+summary_stats.2 #(from above)
 
-site.bar.plot <- ggplot(summary_stats, aes(x = treat_desc, y = mean, fill = treat_desc)) +
+site.bar.plot <- ggplot(summary_stats.2, aes(x = treat, y = mean, fill = treat_desc)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(aes(label = Significance, y = Q3),   # Add significance letters
             vjust = -0.5,                         # Position above error bars
-            size = 6,                             # Text size
+            size = 5,                             # Text size
             fontface = "bold") +                  # Make bold
   labs(
     title = "Crop Yield by Treatment",
     #subtitle = "No cleaning or trimming",
     x = NULL,
-    y = "Yield (t/ha)"
+    y = "Yield (t/ha)",
+    fill = NULL #removed the legend title
   ) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +  # Add extra space at top
   theme_minimal() +
   theme(
     text = element_text(size = 16),
     axis.title = element_text(size = 16),
     axis.text = element_text(size = 16),
     plot.title = element_text(size = 16, hjust = 0.5),
-    legend.position = "none",
+    legend.position = "bottom",
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
 
@@ -470,7 +373,8 @@ site.bar.plot
 
 ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
                  "/",subfolder1,
-                 "/",subfolder2,
+                "/",subfolder2,"/qgis",
+                
                  '/summary-plot-whole-pdk.png'), site.bar.plot)
 
 
@@ -480,18 +384,21 @@ ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
 
 ################################################################################
 ## Step 6) Compute summary statistics by zone
+str(df)
+
 control_group <- df %>%
   filter(treat == "C")
 str(control_group)
-control_group <- control_group %>% rename(zone=  gridcode)
+control_group <- control_group %>% rename(zone=  mean_zone)
 
 
 str(df)
-df <- df %>% rename(zone=  gridcode)
+df <- df %>% rename(zone=  mean_zone)
 
 
 # Run t-tests comparing each treatment to control within each gridcode
 t_test_results_zone <- df %>%
+  st_drop_geometry() %>% 
   filter(treat != "C") %>%
   group_by(zone , treat, treat_desc) %>%
   do({
@@ -583,6 +490,7 @@ sig_letters_all <- sig_letters_all %>% rename(zone = gridcode )
 ####################################################################
 # Create summary statistics by gridcode and treatment
 summary_stats_zone <- df %>%
+  st_drop_geometry() %>% 
   group_by(zone, treat, treat_desc) %>%
   summarise(
     mean = mean(target.variable, na.rm = TRUE),
@@ -596,7 +504,7 @@ summary_stats_zone <- df %>%
 
 # Join with significance letters
 summary_stats.2 <- summary_stats_zone %>%
-  inner_join(sig_letters_all, by = c("zone", "treat"))
+    inner_join(sig_letters_all, by = c("zone", "treat"))
 
 print(summary_stats.2)
 
@@ -621,7 +529,7 @@ summary_stats.2 <- summary_stats.2 %>%
 #### Up to here need to add the letters and fix up the names of treatments
 
 zone.bar.plot_zone <- summary_stats.2 %>%
-  ggplot(aes(x = treat_desc, y = mean, fill = treat_desc)) +
+  ggplot(aes(x = treat, y = mean, fill = treat_desc)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(aes(label = Significance, y = Q3),   # Add significance letters
@@ -632,8 +540,9 @@ zone.bar.plot_zone <- summary_stats.2 %>%
     title = "Crop Yield by Treatment and Zone",
     x = NULL,
     y = "Yield (t/ha)",
-    fill = "Treatment"
+    fill = NULL  # Remove legend title
   ) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +  # Add extra space at top
   facet_wrap(. ~ zone_label, scales = "free_x") +
   theme_minimal() +
   theme(
@@ -658,7 +567,7 @@ zone.bar.plot_zone
 
 ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
               "/",subfolder1,
-              "/",subfolder2,
+              "/",subfolder2,"/qgis",
               '/summary-plot-byzone.png'), zone.bar.plot_zone)
 
 
