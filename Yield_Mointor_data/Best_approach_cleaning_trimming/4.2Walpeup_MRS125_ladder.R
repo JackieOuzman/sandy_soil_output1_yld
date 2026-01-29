@@ -31,7 +31,7 @@ headDir <- paste0(dir, "/work/Output-1/", site_number)
 analysis.type <- "Harvest"
 
 subfolder1 <- "testing_cleaning_trimming_etc"
-subfolder2 <- "ladder_polygons"
+subfolder2 <- "4.ladder_polygons"
 
 clean.dat <- "No"
 analysis.yr <- "25"
@@ -61,49 +61,27 @@ crs_used <- 4326  ## EPSG:4326 is WGS84 (World Geodetic System 1984) - a geograp
 ########################    Read in metadata info file names and path ##########
 ################################################################################
 
-file_path_details <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "location of file and details") %>% 
-  filter(Site == site_number)
 
-seasons <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "seasons") %>% 
-  filter(Site == site_number)
-
-harvest_data_file <-  readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "Harvest_data") %>% 
-  filter(Site == site_number)
 
 
 ################################################################################
 
-harvest_files_options2 <- list.files(path =
-                     paste0(headDir, "/", 
-                            "10.Analysis/",
-                            analysis.yr,"/",
-                            analysis.type,"/",
-                            subfolder1,"/",
-                            subfolder2,"/"
-                            ), 
-                   pattern = ".xls")
-harvest_file_path <- paste0(headDir, "/", 
-                             "10.Analysis/",
-                             analysis.yr,"/",
-                             analysis.type,"/",
-                             subfolder1,"/",
-                             subfolder2,"/")
 
-harvest_files_options2
-harvest_file_path
 
 
 # Load the file 
 
-harvest_raw <- st_read(paste0(harvest_file_path, harvest_files_options2)) 
- 
-str(harvest_raw)
+## This file is the raw data supplied projected in Armap and header rows removed (manually and joined to zone and treatment)
+harvest_raw <- st_read(
+  paste0(
+    headDir,
+    "/",
+    "/10.Analysis/25/Harvest/testing_cleaning_trimming_etc/",
+    "Rawish_data_projected_joined/",
+    "raw_data_clipped_with_zone.shp"
+  )
+)
+
 
 #############
 ## work out which clm to use 
@@ -119,10 +97,14 @@ harvest_raw %>%
 
 
 
-
-
 # Drop geometry and convert to data frame
 harvest_raw_df <- harvest_raw
+# # convert to data frame but add in X and Y
+harvest_raw_df <- harvest_raw %>%
+  mutate(POINT_X = st_coordinates(.)[,1],
+         POINT_Y = st_coordinates(.)[,2]) 
+
+
 ##subset the data
 names(harvest_raw_df)
 harvest_raw_df <- harvest_raw_df %>% 
@@ -143,21 +125,19 @@ control.name <- "Control"
 ## Define name of Buffer (if applicable)
 buffer.name <- "Buffer"
 
-clean.dat <- "Yes"
 
-model <- "XGBoost" #"Random Forest
 
 ###############################################################################
 
-rm(harvest_raw)
-str(harvest_raw_df)
-
-harvest_raw_spatial <- st_as_sf(harvest_raw_df, 
-                       coords = c("POINT_X", "POINT_Y"),
-                       crs = 28354)  # Recommended CRS for Walpeup EPSG:7855 - GDA2020 / MGA zone 54
-
-
-harvest_raw_spatial
+# rm(harvest_raw)
+# str(harvest_raw_df)
+# 
+# harvest_raw_spatial <- st_as_sf(harvest_raw_df, 
+#                        coords = c("POINT_X", "POINT_Y"),
+#                        crs = 28354)  # Recommended CRS for Walpeup EPSG:7855 - GDA2020 / MGA zone 54
+# 
+# 
+# harvest_raw_spatial
 ################################################################################
 ### Load in the ladders that I made in qgis using Christina tools
 
@@ -179,7 +159,7 @@ ladder_file_path <- paste0(headDir, "/",
 
 ladders_files
 ladder_file_path
-unique(harvest_raw_spatial$treat)
+
 
 ladders_files_qgis <- list.files(path =
                               paste0(headDir, "/", 
@@ -204,13 +184,13 @@ unique(ladders_qgis$plot)
 #treat, trialwidth, PointID, DistOnLine
 ladders_qgis <- ladders_qgis %>% select(treat, trialwidth, PointID, DistOnLine)
 
-
+st_crs(ladders_qgis) == st_crs(harvest_raw_df)
 ################################################################################
 
 ### add ladder ID to yield data
 # Spatial join - adds polygon attributes to points
 
-harvest_clipped <- st_intersection(harvest_raw_spatial, 
+harvest_clipped <- st_intersection(harvest_raw_df, 
                                    st_union(ladders_qgis))
 plot(harvest_clipped)
 str(harvest_clipped)
@@ -250,7 +230,7 @@ st_write(yld_data_with_summary_pt,
          delete_dsn = TRUE)
 
 
-
+unique(yld_data_with_summary_pt$treat)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%% General Stats - Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
