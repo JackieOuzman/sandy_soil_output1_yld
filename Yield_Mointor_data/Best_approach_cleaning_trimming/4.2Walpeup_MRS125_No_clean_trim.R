@@ -45,44 +45,11 @@ crs_used <- 4326
 ########################    Read in metadata info file names and path ##########
 ################################################################################
 
-# file_path_details <- readxl::read_excel(
-#   paste0(metadata_path,metadata_file_name),
-#   sheet = "location of file and details") %>% 
-#   filter(Site == site_number)
-# 
-# seasons <- readxl::read_excel(
-#   paste0(metadata_path,metadata_file_name),
-#   sheet = "seasons") %>% 
-#   filter(Site == site_number)
-# 
-# harvest_data_file <-  readxl::read_excel(
-#   paste0(metadata_path,metadata_file_name),
-#   sheet = "Harvest_data") %>% 
-#   filter(Site == site_number)
 
 
 ################################################################################
 
-## get the list of all the file options
-# harvest_files_all_options1 <- list.files(path = paste0(headDir, "/", harvest_data_file$files))
-# harvest_files_all_options1
-# 
-# 
-# ## get the list of all the file that have been projected and joined
-# harvest_files_all_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped))
-# harvest_files_all_options2
-# 
-# ## select which file I will use
-# harvest_files_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped), 
-#                             pattern = ".shp")
-# harvest_files_options2
-# file_path <- paste0(headDir, "/", harvest_data_file$MGA_joined_clipped)
-# 
-# 
-# # Load the file 
-# harvest_files_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped), 
-#                                      pattern = "clipped_join_strip_clust.shp")
-# harvest_files_options2
+
 
 ## This file is the raw data supplied projected in Armap and header rows removed (manually and joined to zone and treatment)
 harvest_raw <- st_read(
@@ -95,8 +62,7 @@ harvest_raw <- st_read(
   )
 )
  
-plot(harvest_raw)
-str(harvest_raw)
+
 #############
 ## work out which clm to use 
 
@@ -222,7 +188,7 @@ tukey_results <- as.data.frame(tukey["treat"])
 letters <- multcompLetters4(anova, tukey)
 
 # Convert to a dataframe
-# Convert to a dataframe - CORRECTED
+
 sig.out <- data.frame(
   treat = names(letters$treat$Letters),  # Add $ before treat
   Significance = letters$treat$Letters   # Add $ before treat
@@ -252,20 +218,7 @@ write.csv(summary_stats.2,
 ################################################################################
 ## Step 5) Make a ggplot
 
-# Compute summary statistics (median, 25th, and 75th percentiles)
-#mean, instead of median
-# summary_stats <- df %>%
-#   group_by( treat_desc) %>%
-#   #group_by(!!sym(treat.col.name)) %>%
-#   summarise(
-#     mean = mean(target.variable, na.rm = TRUE),
-#     Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
-#     Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
-#   )
-# 
-# summary_stats
-# summary_stats.2
-# summary_stats <- left_join(summary_stats, summary_stats.2)
+
 
 # Create the bar plot
 summary_stats.2

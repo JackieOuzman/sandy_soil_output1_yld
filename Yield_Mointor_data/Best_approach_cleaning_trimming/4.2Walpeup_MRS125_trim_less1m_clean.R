@@ -251,25 +251,11 @@ st_write(df,
                 '/remove1m.shp'),
          delete_dsn = TRUE)
 
+
+
 ################################################################################
 ## Step 5) Make a ggplot
 
-# Compute summary statistics (median, 25th, and 75th percentiles)
-#mean, instead of median
-# str(df)
-# 
-# summary_stats <- df %>%
-#   #group_by( treat_id) %>% # if you want the buffers sep
-#   group_by( treat_desc) %>%
-#   summarise(
-#     mean = mean(target.variable, na.rm = TRUE),
-#     Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
-#     Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
-#   )
-# 
-# summary_stats
-# summary_stats.2
-# summary_stats <- left_join(summary_stats, summary_stats.2)
 
 # Create the bar plot
 summary_stats.2
@@ -309,6 +295,9 @@ ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
                  "/",subfolder1,
                  "/",subfolder2,
                  '/summary-plot-whole-pdk.png'), site.bar.plot)
+
+
+
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -493,6 +482,7 @@ ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
               "/",subfolder1,
               "/",subfolder2,
               '/summary-plot-byzone.png'), zone.bar.plot_zone)
+
 
 
 
