@@ -40,7 +40,23 @@ analysis.yr <- "25"
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
 metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
 
-crs_used <- 4326
+crs_used <- 4326  ## EPSG:4326 is WGS84 (World Geodetic System 1984) - a geographic coordinate system (not a projected coordinate system).
+#GDA2020 / MGA Zone 54 (EPSG:7854) Most common for this area
+#Walpeup is in MGA Zone 54 UTM-based, suitable for local/regional work
+#st_transform(your_data, crs = 7854)
+
+# GDA94 / MGA Zone 54 (EPSG:28354) Older datum, still widely used
+# Compatible with legacy datasets
+# st_transform(your_data, crs = 28354)
+
+# GDA2020 / Vicgrid (EPSG:7899)Victoria-specific projection
+# Good for state-wide work
+#st_transform(your_data, crs = 7899)
+
+# WGS84 / UTM Zone 54S (EPSG:32754) International standard
+# Good for GPS data
+#st_transform(your_data, crs = 32754)
+
 ################################################################################
 ########################    Read in metadata info file names and path ##########
 ################################################################################
@@ -226,6 +242,13 @@ yld_data_with_summary_pt <- yld_data_with_summary %>%
   st_centroid()
 plot(yld_data_with_summary_pt)
 str(yld_data_with_summary_pt)
+
+st_write(yld_data_with_summary_pt, 
+         paste0(headDir, '/10.Analysis/25/', analysis.type,
+                "/", subfolder1,
+                "/", subfolder2, "/qgis/yld_data_with_summary_pt.shp"),
+         delete_dsn = TRUE)
+
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
