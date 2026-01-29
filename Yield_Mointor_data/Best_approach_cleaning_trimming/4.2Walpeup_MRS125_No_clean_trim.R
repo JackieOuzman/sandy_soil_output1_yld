@@ -58,7 +58,7 @@ harvest_raw <- st_read(
     "/",
     "/10.Analysis/25/Harvest/testing_cleaning_trimming_etc/",
     "Rawish_data_projected_joined/",
-    "MRS125_Harvest_MGA_clipped_join_strip_clust.shp"
+    "raw_data_clipped_with_zone.shp"
   )
 )
  
@@ -74,19 +74,20 @@ harvest_raw %>%
   st_drop_geometry() %>%
   summary()
 
-#Looks like VRYIELDMAS, WetMass are almost the same... use VRYIELDMAS
+# #Looks like VRYIELDMAS, WetMass are almost the same... use VRYIELDMAS
+# # convert to data frame but add in X and Y
+harvest_raw_df <- harvest_raw %>%
+  mutate(POINT_X = st_coordinates(.)[,1],
+         POINT_Y = st_coordinates(.)[,2]) 
 
 
-
-
-
-# Drop geometry and convert to data frame
-harvest_raw_df <- st_drop_geometry(harvest_raw)
 ##subset the data
 names(harvest_raw_df)
 harvest_raw_df <- harvest_raw_df %>% 
-  select(VRYIELDMAS, "treat"  ,    "treat_desc" ,"gridcode")
+  select(VRYIELDMAS, "treat"  ,    "treat_desc" ,"gridcode", "treat_id", "POINT_X", "POINT_Y")
+
 names(harvest_raw_df)
+
 
 ################################################################################
 ## Step 1) Define variables
@@ -102,9 +103,9 @@ control.name <- "Control"
 ## Define name of Buffer (if applicable)
 buffer.name <- "Buffer"
 
-clean.dat <- "Yes"
-
-model <- "XGBoost" #"Random Forest
+# clean.dat <- "Yes"
+# 
+# model <- "XGBoost" #"Random Forest
 
 ###############################################################################
 
@@ -120,7 +121,7 @@ model <- "XGBoost" #"Random Forest
 
 
 #rename the df so the code will run. and remove the buffers
-rm(harvest_raw_df)
+
 df <- harvest_raw_df %>% filter(treat != "B")  
 unique(df$treat_desc)
 unique(df$treat)
@@ -132,6 +133,7 @@ str(df)
 
 
 summary_stats <- df %>%
+  st_drop_geometry() %>% 
   group_by(treat) %>%
   summarize(
     mean = mean(target.variable, na.rm = TRUE),
@@ -245,7 +247,7 @@ site.bar.plot <- ggplot(summary_stats.2, aes(x = treat, y = mean, fill = treat_d
     axis.text = element_text(size = 16),
     plot.title = element_text(size = 16, hjust = 0.5),
     legend.position = "bottom",  # Show legend at bottom
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 0, hjust = 1)
   )
 
 # Print the plot
@@ -259,6 +261,16 @@ ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
                  "/",subfolder2,
                  '/summary-plot-whole-pdk.png'), site.bar.plot)
 
+
+
+
+df
+st_write(df,
+         paste0(headDir, '/10.Analysis/25/', analysis.type,
+                "/", subfolder1,
+                "/", subfolder2,
+                '/no_clean_trim.shp'),
+         delete_dsn = TRUE)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%% By Zone Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
