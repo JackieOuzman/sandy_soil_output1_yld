@@ -35,7 +35,7 @@ raw_data <- st_read(
     "/",
     "/10.Analysis/25/Harvest/testing_cleaning_trimming_etc/",
     "Rawish_data_projected_joined/",
-    "Lowan Ridge_MRS 1252025-12-07_00Proj.shp"))
+    "MRS125_Harvest_MGA_clipped1HeadlandRemoved.shp"))
 plot(raw_data)
 
 

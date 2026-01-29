@@ -17,7 +17,8 @@ library(terra)
 library(tidyterra)
 
 library(broom)
-
+#install.packages("nngeo")
+library(nngeo)
 
 ################################################################################
 ########################            Define the directory              ##########
@@ -31,7 +32,7 @@ headDir <- paste0(dir, "/work/Output-1/", site_number)
 analysis.type <- "Harvest"
 
 subfolder1 <- "testing_cleaning_trimming_etc"
-subfolder2 <- "clean_trim_per_strip"
+subfolder2 <- "2.trim_close_pts"
 
 clean.dat <- "No"
 analysis.yr <- "25"
@@ -45,53 +46,25 @@ crs_used <- 4326
 ########################    Read in metadata info file names and path ##########
 ################################################################################
 
-file_path_details <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "location of file and details") %>% 
-  filter(Site == site_number)
-
-seasons <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "seasons") %>% 
-  filter(Site == site_number)
-
-harvest_data_file <-  readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "Harvest_data") %>% 
-  filter(Site == site_number)
 
 
 ################################################################################
 
-harvest_files_options2 <- list.files(path =
-                     paste0(headDir, "/", 
-                            "10.Analysis/",
-                            analysis.yr,"/",
-                            analysis.type,"/",
-                            subfolder1,"/",
-                            subfolder2,"/"
-                            ), 
-                   pattern = ".xls")
-harvest_file_path <- paste0(headDir, "/", 
-                             "10.Analysis/",
-                             analysis.yr,"/",
-                             analysis.type,"/",
-                             subfolder1,"/",
-                             subfolder2,"/")
+## This file is the raw data supplied projected in Armap and header rows removed (manually and joined to zone and treatment)
+harvest_raw <- st_read(
+  paste0(
+    headDir,
+    "/",
+    "/10.Analysis/25/Harvest/testing_cleaning_trimming_etc/",
+    "Rawish_data_projected_joined/",
+    "raw_data_clipped_with_zone.shp"
+  )
+)
 
-harvest_files_options2
-harvest_file_path
-
-
-# Load the file 
-
-
-
-
-
-harvest_raw <- st_read(paste0(harvest_file_path, harvest_files_options2)) 
- 
+plot(harvest_raw)
 str(harvest_raw)
+
+
 
 #############
 ## work out which clm to use 
@@ -100,21 +73,21 @@ harvest_raw
 names(harvest_raw)
 
 harvest_raw %>%
-  select(VRYIELDMAS, WetMass, Moisture, DRYMATTER, treat_id) %>% 
+  select(VRYIELDMAS, WetMass, Moisture, DRYMATTER) %>% 
   summary()
 
-#Looks like VRYIELDMAS, WetMass are almost the same... use VRYIELDMAS
+# #Looks like VRYIELDMAS, WetMass are almost the same... use VRYIELDMAS
+# # convert to data frame but add in X and Y
+harvest_raw_df <- harvest_raw %>%
+  mutate(POINT_X = st_coordinates(.)[,1],
+         POINT_Y = st_coordinates(.)[,2]) 
 
 
-
-
-
-# Drop geometry and convert to data frame
-harvest_raw_df <- harvest_raw
 ##subset the data
 names(harvest_raw_df)
 harvest_raw_df <- harvest_raw_df %>% 
   select(VRYIELDMAS, "treat"  ,    "treat_desc" ,"gridcode", "treat_id", "POINT_X", "POINT_Y")
+
 names(harvest_raw_df)
 
 ################################################################################
@@ -131,41 +104,40 @@ control.name <- "Control"
 ## Define name of Buffer (if applicable)
 buffer.name <- "Buffer"
 
-clean.dat <- "Yes"
-
-model <- "XGBoost" #"Random Forest
+# clean.dat <- "Yes"
+# 
+# model <- "XGBoost" #"Random Forest
 
 ###############################################################################
 
 
-## cleaning and trimming
+## remove buffers
 
 rm(harvest_raw)
 str(harvest_raw_df)
 
 harvest_raw_df <- harvest_raw_df %>% rename("target.variable" = VRYIELDMAS)
 
-harvest_raw_df <- harvest_raw_df %>% filter(target.variable > 0)
+
+harvest_raw_df <- harvest_raw_df %>%  filter(treat != "B")  
+
+## remove pt closer than 1m
+# Calculate distance to nearest neighbor for each point
+harvest_filtered <- harvest_raw_df %>%
+  mutate(dist_to_nearest = st_nn(geometry, geometry, k = 2, returnDist = TRUE)$dist %>% 
+           sapply(function(x) x[2])) %>%  # k=2 because first nearest is itself
+  filter(dist_to_nearest >= 1) %>%  # Keep only points >= 1m apart
+  select(-dist_to_nearest)  # Remove the temporary column
+harvest_filtered
+
+#how many points were removed 
+nrow(harvest_raw_df) - nrow(harvest_filtered)
+## This says 34 
 
 
-# Calculate bounds and filter for each treatment
-data.clean <- harvest_raw_df %>%
-  #group_by(treat_id) %>% if you want the buffered seperate
-  group_by(treat_desc) %>%
-  mutate(
-    Q1 = quantile(target.variable, 0.25),
-    Q3 = quantile(target.variable, 0.75),
-    IQR = Q3 - Q1,
-    lower_bound = Q1 - 2 * IQR,
-    upper_bound = Q3 + 2 * IQR
-  ) %>%
-  filter(target.variable >= lower_bound & target.variable <= upper_bound) %>%
-  select(-Q1, -Q3, -IQR, -lower_bound, -upper_bound) %>%
-  ungroup()
 
-data.clean
-treat_id_treat_names <- data.clean %>% distinct(treat_id, treat_desc)
-data.clean <- left_join(data.clean, treat_id_treat_names)
+
+
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -175,7 +147,7 @@ data.clean <- left_join(data.clean, treat_id_treat_names)
 ################################################################################
 ## Step 4) Compute summary statistics for whole of field
 
-df <- data.clean
+df <- harvest_raw_df
 unique(harvest_raw_df$treat_desc)
 unique(harvest_raw_df$treat)
 names(df)
@@ -187,6 +159,7 @@ str(df)
 
 
 summary_stats <- df %>%
+  st_drop_geometry() %>% 
   group_by(treat) %>%
   summarize(
     mean = mean(target.variable, na.rm = TRUE),
@@ -194,6 +167,8 @@ summary_stats <- df %>%
     min = min(target.variable, na.rm = TRUE),
     max = max(target.variable, na.rm = TRUE),
     median = median(target.variable, na.rm = TRUE),
+    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
+    Q3 = quantile(target.variable, 0.75, na.rm = TRUE),
     target.variable = n()
   )
 
@@ -260,7 +235,7 @@ list_treatments <- df %>% dplyr::distinct(treat, .keep_all = TRUE) %>% select(-t
 
 
 summary_stats.2 <- left_join(summary_stats.2, list_treatments)
-
+summary_stats.2
 
 write.csv(summary_stats.2,
           paste0(headDir,'/10.Analysis/25/',analysis.type,
@@ -268,36 +243,38 @@ write.csv(summary_stats.2,
                  "/",subfolder2,
                  '/summary-stats-whole-pdk.csv'))
 
-write.csv(df,
-          paste0(headDir,'/10.Analysis/25/',analysis.type,
-                 "/",subfolder1,
-                 "/",subfolder2,
-                 '/clean_trim.csv'))
+df
+st_write(df,
+         paste0(headDir, '/10.Analysis/25/', analysis.type,
+                "/", subfolder1,
+                "/", subfolder2,
+                '/remove1m.shp'),
+         delete_dsn = TRUE)
 
 ################################################################################
 ## Step 5) Make a ggplot
 
 # Compute summary statistics (median, 25th, and 75th percentiles)
 #mean, instead of median
-str(df)
-
-summary_stats <- df %>%
-  #group_by( treat_id) %>% # if you want the buffers sep
-  group_by( treat_desc) %>%
-  summarise(
-    mean = mean(target.variable, na.rm = TRUE),
-    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
-    Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
-  )
-
-summary_stats
-summary_stats.2
-summary_stats <- left_join(summary_stats, summary_stats.2)
+# str(df)
+# 
+# summary_stats <- df %>%
+#   #group_by( treat_id) %>% # if you want the buffers sep
+#   group_by( treat_desc) %>%
+#   summarise(
+#     mean = mean(target.variable, na.rm = TRUE),
+#     Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
+#     Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
+#   )
+# 
+# summary_stats
+# summary_stats.2
+# summary_stats <- left_join(summary_stats, summary_stats.2)
 
 # Create the bar plot
-summary_stats
+summary_stats.2
 
-site.bar.plot <- ggplot(summary_stats, aes(x = treat_desc, y = mean, fill = treat_desc)) +
+site.bar.plot <- ggplot(summary_stats.2, aes(x = treat, y = mean, fill = treat_desc)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(aes(label = Significance, y = Q3),   # Add significance letters
@@ -308,16 +285,18 @@ site.bar.plot <- ggplot(summary_stats, aes(x = treat_desc, y = mean, fill = trea
     title = "Crop Yield by Treatment",
     #subtitle = "No cleaning or trimming",
     x = NULL,
-    y = "Yield (t/ha)"
+    y = "Yield (t/ha)",
+    fill = NULL  # Remove legend title
   ) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +  # Add extra space at top
   theme_minimal() +
   theme(
     text = element_text(size = 16),
     axis.title = element_text(size = 16),
     axis.text = element_text(size = 16),
     plot.title = element_text(size = 16, hjust = 0.5),
-    legend.position = "none",
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    legend.position = "bottom",  # Show legend at bottom
+    axis.text.x = element_text(angle = 0, hjust = 1)
   )
 
 # Print the plot
@@ -479,7 +458,7 @@ summary_stats.2 <- summary_stats.2 %>%
 #### Up to here need to add the letters and fix up the names of treatments
 
 zone.bar.plot_zone <- summary_stats.2 %>%
-  ggplot(aes(x = treat_desc, y = mean, fill = treat_desc)) +
+  ggplot(aes(x = treat, y = mean, fill = treat_desc)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(aes(label = Significance, y = Q3),   # Add significance letters
@@ -490,8 +469,9 @@ zone.bar.plot_zone <- summary_stats.2 %>%
     title = "Crop Yield by Treatment and Zone",
     x = NULL,
     y = "Yield (t/ha)",
-    fill = "Treatment"
+    fill = NULL  # Remove legend title
   ) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +  # Add extra space at top
   facet_wrap(. ~ zone_label, scales = "free_x") +
   theme_minimal() +
   theme(
@@ -499,18 +479,13 @@ zone.bar.plot_zone <- summary_stats.2 %>%
     axis.title.y = element_text(size = 22),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
-    legend.title = element_text(size = 18),
     legend.text = element_text(size = 14),
     strip.text = element_text(size = 18, face = "bold"),
     plot.title = element_text(hjust = 0.5),
     legend.position = "bottom",
     legend.box = "vertical",
     legend.justification = "center"
-  ) +
-  guides(
-    fill = guide_legend(title.position = "top", title.hjust = 0.5)
   )
-
 zone.bar.plot_zone
 
 
