@@ -31,7 +31,7 @@ headDir <- paste0(dir, "/work/Output-1/", site_number)
 analysis.type <- "Harvest"
 
 subfolder1 <- "testing_cleaning_trimming_etc"
-subfolder2 <- "no_clean_trim"
+subfolder2 <- "1.no_clean_trim"
 
 clean.dat <- "No"
 analysis.yr <- "25"
@@ -45,48 +45,58 @@ crs_used <- 4326
 ########################    Read in metadata info file names and path ##########
 ################################################################################
 
-file_path_details <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "location of file and details") %>% 
-  filter(Site == site_number)
-
-seasons <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "seasons") %>% 
-  filter(Site == site_number)
-
-harvest_data_file <-  readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "Harvest_data") %>% 
-  filter(Site == site_number)
+# file_path_details <- readxl::read_excel(
+#   paste0(metadata_path,metadata_file_name),
+#   sheet = "location of file and details") %>% 
+#   filter(Site == site_number)
+# 
+# seasons <- readxl::read_excel(
+#   paste0(metadata_path,metadata_file_name),
+#   sheet = "seasons") %>% 
+#   filter(Site == site_number)
+# 
+# harvest_data_file <-  readxl::read_excel(
+#   paste0(metadata_path,metadata_file_name),
+#   sheet = "Harvest_data") %>% 
+#   filter(Site == site_number)
 
 
 ################################################################################
 
 ## get the list of all the file options
-harvest_files_all_options1 <- list.files(path = paste0(headDir, "/", harvest_data_file$files))
-harvest_files_all_options1
+# harvest_files_all_options1 <- list.files(path = paste0(headDir, "/", harvest_data_file$files))
+# harvest_files_all_options1
+# 
+# 
+# ## get the list of all the file that have been projected and joined
+# harvest_files_all_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped))
+# harvest_files_all_options2
+# 
+# ## select which file I will use
+# harvest_files_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped), 
+#                             pattern = ".shp")
+# harvest_files_options2
+# file_path <- paste0(headDir, "/", harvest_data_file$MGA_joined_clipped)
+# 
+# 
+# # Load the file 
+# harvest_files_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped), 
+#                                      pattern = "clipped_join_strip_clust.shp")
+# harvest_files_options2
 
-
-## get the list of all the file that have been projected and joined
-harvest_files_all_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped))
-harvest_files_all_options2
-
-## select which file I will use
-harvest_files_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped), 
-                            pattern = ".shp")
-harvest_files_options2
-
-# Load the file 
-harvest_files_options2 <- list.files(path = paste0(headDir, "/", harvest_data_file$MGA_joined_clipped), 
-                                     pattern = "clipped_join_strip_clust.shp")
-harvest_files_options2
-
+## This file is the raw data supplied projected in Armap and header rows removed (manually and joined to zone and treatment)
 harvest_raw <- st_read(
-  paste0(headDir,"/", harvest_data_file$MGA_joined_clipped,harvest_files_options2)) 
+  paste0(
+    headDir,
+    "/",
+    "/10.Analysis/25/Harvest/testing_cleaning_trimming_etc/",
+    "Rawish_data_projected_joined/",
+    "MRS125_Harvest_MGA_clipped_join_strip_clust.shp"
+  )
+)
  
 plot(harvest_raw)
-
+str(harvest_raw)
 #############
 ## work out which clm to use 
 
@@ -142,10 +152,12 @@ model <- "XGBoost" #"Random Forest
 ################################################################################
 ## Step 4) Compute summary statistics for whole of field
 
-df <- harvest_raw_df
-unique(harvest_raw_df$treat_desc)
-unique(harvest_raw_df$treat)
-names(df)
+
+#rename the df so the code will run. and remove the buffers
+rm(harvest_raw_df)
+df <- harvest_raw_df %>% filter(treat != "B")  
+unique(df$treat_desc)
+unique(df$treat)
 str(df)
 
 df <-  dplyr::rename(df, target.variable = VRYIELDMAS )
@@ -161,10 +173,12 @@ summary_stats <- df %>%
     min = min(target.variable, na.rm = TRUE),
     max = max(target.variable, na.rm = TRUE),
     median = median(target.variable, na.rm = TRUE),
+    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
+    Q3 = quantile(target.variable, 0.75, na.rm = TRUE),
     target.variable = n()
   )
 
-
+summary_stats
 
 
 
@@ -172,9 +186,9 @@ summary_stats <- df %>%
 control_group <- df %>%
   filter(treat == "C")
 
-# Run t-tests
+# Run t-tests (without buffers)
 t_test_results <- df %>%
-  filter(treat != "C") %>%
+   filter(treat != "C") %>%
   group_by(treat, treat_desc) %>%
   do({
     treatment_data <- .$target.variable
@@ -227,7 +241,7 @@ list_treatments <- df %>% dplyr::distinct(treat, .keep_all = TRUE) %>% select(-t
 
 
 summary_stats.2 <- left_join(summary_stats.2, list_treatments)
-
+summary_stats.2
 
 write.csv(summary_stats.2,
           paste0(headDir,'/10.Analysis/25/',analysis.type,
@@ -240,23 +254,23 @@ write.csv(summary_stats.2,
 
 # Compute summary statistics (median, 25th, and 75th percentiles)
 #mean, instead of median
-summary_stats <- df %>%
-  group_by( treat_desc) %>%
-  #group_by(!!sym(treat.col.name)) %>%
-  summarise(
-    mean = mean(target.variable, na.rm = TRUE),
-    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
-    Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
-  )
-
-summary_stats
-summary_stats.2
-summary_stats <- left_join(summary_stats, summary_stats.2)
+# summary_stats <- df %>%
+#   group_by( treat_desc) %>%
+#   #group_by(!!sym(treat.col.name)) %>%
+#   summarise(
+#     mean = mean(target.variable, na.rm = TRUE),
+#     Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
+#     Q3 = quantile(target.variable, 0.75, na.rm = TRUE)
+#   )
+# 
+# summary_stats
+# summary_stats.2
+# summary_stats <- left_join(summary_stats, summary_stats.2)
 
 # Create the bar plot
-summary_stats
+summary_stats.2
 
-site.bar.plot <- ggplot(summary_stats, aes(x = treat_desc, y = mean, fill = treat_desc)) +
+site.bar.plot <- ggplot(summary_stats.2, aes(x = treat, y = mean, fill = treat_desc)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(aes(label = Significance, y = Q3),   # Add significance letters
@@ -267,15 +281,17 @@ site.bar.plot <- ggplot(summary_stats, aes(x = treat_desc, y = mean, fill = trea
     title = "Crop Yield by Treatment",
     #subtitle = "No cleaning or trimming",
     x = NULL,
-    y = "Yield (t/ha)"
+    y = "Yield (t/ha)",
+    fill = NULL  # Remove legend title
   ) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +  # Add extra space at top
   theme_minimal() +
   theme(
     text = element_text(size = 16),
     axis.title = element_text(size = 16),
     axis.text = element_text(size = 16),
     plot.title = element_text(size = 16, hjust = 0.5),
-    legend.position = "none",
+    legend.position = "bottom",  # Show legend at bottom
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
 
@@ -301,7 +317,7 @@ control_group <- df %>%
   filter(treat == "C")
 str(control_group)
 control_group <- control_group %>% rename(zone=  gridcode)
-
+df <- df %>% rename(zone=  gridcode)
 
 str(df)
 # Run t-tests comparing each treatment to control within each gridcode
@@ -435,7 +451,7 @@ summary_stats.2 <- summary_stats.2 %>%
 #### Up to here need to add the letters and fix up the names of treatments
 
 zone.bar.plot_zone <- summary_stats.2 %>%
-  ggplot(aes(x = treat_desc, y = mean, fill = treat_desc)) +
+  ggplot(aes(x = treat, y = mean, fill = treat_desc)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(aes(label = Significance, y = Q3),   # Add significance letters
@@ -446,8 +462,9 @@ zone.bar.plot_zone <- summary_stats.2 %>%
     title = "Crop Yield by Treatment and Zone",
     x = NULL,
     y = "Yield (t/ha)",
-    fill = "Treatment"
+    fill = NULL  # Remove legend title
   ) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +  # Add extra space at top
   facet_wrap(. ~ zone_label, scales = "free_x") +
   theme_minimal() +
   theme(
@@ -455,16 +472,12 @@ zone.bar.plot_zone <- summary_stats.2 %>%
     axis.title.y = element_text(size = 22),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
-    legend.title = element_text(size = 18),
     legend.text = element_text(size = 14),
     strip.text = element_text(size = 18, face = "bold"),
     plot.title = element_text(hjust = 0.5),
     legend.position = "bottom",
     legend.box = "vertical",
     legend.justification = "center"
-  ) +
-  guides(
-    fill = guide_legend(title.position = "top", title.hjust = 0.5)
   )
 
 zone.bar.plot_zone
@@ -476,7 +489,7 @@ ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
               '/summary-plot-byzone.png'), zone.bar.plot_zone)
 
 
-
+df
 
 
 
