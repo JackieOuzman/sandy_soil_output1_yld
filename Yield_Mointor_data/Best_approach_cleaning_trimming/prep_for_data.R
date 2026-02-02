@@ -69,7 +69,8 @@ raw_data_clipped <- st_intersection(raw_data, strips)
 plot(raw_data_clipped)
 
 str(raw_data_clipped)
-
+names(raw_data_clipped)
+summary(raw_data_clipped)
 
 # Spatial join - adds strips attributes to points that fall inside
 #raw_data_clipped_with_strips <- st_join(raw_data_clipped, strips) # I must of did this already
