@@ -45,8 +45,16 @@ combined_df <- combined_df %>%
     first_num == 2 ~ "Thinning",
     first_num == 3 ~ "clean_trim_by_strips",
     first_num == 4 ~ "ladders",
+    first_num == 5 ~ "clean_trim_by_strips_keep_Zero",
     TRUE ~ NA_character_
-  ))
+  )) %>%
+  mutate(method = factor(method, levels = c(
+    "Noclean_no_trim",
+    "Thinning",
+    "clean_trim_by_strips",
+    "ladders",
+    "clean_trim_by_strips_keep_Zero"
+  )))
 
 ggplot(combined_df, aes(x = treat, y = mean, color = method, group = method)) +
   geom_line(linewidth = 1) +
