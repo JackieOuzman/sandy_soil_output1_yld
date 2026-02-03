@@ -31,7 +31,8 @@ analysis.yr <- "25"
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
 metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
 
-crs_used <- 4326
+crs_used <- 4326 # Name: WGS 84 (World Geodetic System 1984) Type: Geographic coordinate system (latitude/longitude)
+projetion_crs <- 28354 #GDA94 / MGA Zone 54 (EPSG:28354).
 ################################################################################
 ########################    Read in metadata info file names and path ##########
 ################################################################################
@@ -66,6 +67,14 @@ strips <- st_make_valid(strips) #Checks whether a geometry is valid, or makes an
 zones <- rast(paste0(file.path(headDir, file_path_details$`location of zone tif`)))
 zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
 
+### project the spatial data 
+# Transform to MGA Zone 54
+boundary_mga <- st_transform(boundary, crs = projetion_crs)
+strips_mga <- st_transform(strips, crs = projetion_crs)
+zones_mga <- project(zones, paste0("EPSG:", projetion_crs))
+
+
+rm(boundary,strips,zones)
 
 ################################################################################
 ### Rinse and Repeat from here
@@ -75,10 +84,12 @@ zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
 #Bring in the data for each field sampling event. These analysis.type are defined by Stirling
 
 #analysis.type <- "Emergence" #
-#analysis.type <- "Harvest" # No data yet
+#analysis.type <- "Peak_Biomass" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+analysis.type <- "Maturity" # N
+#analysis.type <- "Harvest" # N
 
 #analysis.type <- "InSeason" ## ? not sure what this is
-analysis.type <- "Peak_Biomass" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+
 # analysis.type <- "PreSeason" ## ? not sure what this is
 
 
@@ -96,10 +107,14 @@ treat.col.name <- "treat_desc"
 
 
 #################################################################################
+### sometimes you will need to specify the sheet###
+dat.raw <-   read_excel(file.path(headDir,   field_details$data), sheet = "Sheet1")
+data.pts <-  st_read   (file.path(headDir,   field_details$sampling_GPS))
+## Note that the data in these 2 files do not always match
 
-dat.raw <-   read_excel(file.path(headDir,  field_details$data))
-data.pts <-  st_read(file.path(headDir,   field_details$sampling_GPS))
-data.pts_proj <- st_transform(data.pts, crs= crs_used)
+data.pts_wgs <- st_transform(data.pts, crs= crs_used)
+data.pts_proj <- st_transform(data.pts_wgs, crs = projetion_crs)
+
 ## remove some clm to help with join - this is not required with every data set
 # data.pts_proj <- data.pts_proj %>% select(- c("pt_uuid", "site",
 #                                               "location", "treat_desc",
@@ -110,28 +125,62 @@ data.pts_proj <- st_transform(data.pts, crs= crs_used)
 ##################### STOP AND CHECK ###########################################
 
 ### might need to stuff around here to makes sure the zone get imported
+names(dat.raw)
 names(data.pts_proj) 
+
 #data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry" ) 
-data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry", "cluster3","NDVI_drone" ) 
+#data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry", "cluster3" )
+data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry", "cluster3",  "treat" , "treat_desc" )
+#data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry", "cluster3","NDVI_drone" ) 
   
 
 
 names(dat.raw)
 names(data.pts_proj)
   
-dat.all <- inner_join(dat.raw,data.pts_proj,by = "pt_id")
+str(dat.raw)
+str(data.pts_proj)
+
+
+### some quirky stuff to sort ###
+## at Walpeup MRS125 maturity sample has tow pt with 28 called 28.1 and 28.2
+
+# dat.raw <- dat.raw %>%
+#   mutate(Point = case_when(
+#     Point == 28.1 ~ 28,
+#     Point == 28.2 ~ 28,
+#     TRUE ~ Point
+#   )) %>%
+#   group_by(Project, Location, Paddock, Point) %>%
+#   summarise(
+#     `Dry Biomass` = mean(`Dry Biomass`, na.rm = TRUE),
+#     Bag = mean(Bag, na.rm = TRUE),
+#     `Net Biomass (g)` = mean(`Net Biomass (g)`, na.rm = TRUE),
+#     `Dry Biomass (t/ha)` = mean(`Dry Biomass (t/ha)`, na.rm = TRUE),
+#     `Grain (g)` = mean(`Grain (g)`, na.rm = TRUE),
+#     `Grain Bag (g)` = mean(`Grain Bag (g)`, na.rm = TRUE),
+#     `Net Grain (g)` = mean(`Net Grain (g)`, na.rm = TRUE),
+#     `Grain Yield (t/ha)` = mean(`Grain Yield (t/ha)`, na.rm = TRUE),
+#     `250 g/w` = mean(`250 g/w`, na.rm = TRUE),
+#     `1000 gw (g)` = mean(`1000 gw (g)`, na.rm = TRUE),
+#     `Harvest Index %` = mean(`Harvest Index %`, na.rm = TRUE),
+#     Notes = first(Notes),
+#     .groups = "drop"
+#   )
+
+
+dat.all <- inner_join(data.pts_proj,dat.raw, by = join_by("pt_id" == "Point"))
+#dat.all <- inner_join(data.pts_proj,dat.raw, by = "pt_id")
 data_sf <- st_as_sf(dat.all) #converts the data frame into sf object
 str(data_sf)
 rm(dat.raw,data.pts, data.pts_proj, dat.all)
 
 
 ################################################################################
-data.raw <- data_sf #renaming data into generic name
-rm(data_sf)
 
 #assign the control when named vaguely
 
-strips <- strips %>%
+strips_mga <- strips_mga %>%
   mutate(treat_desc = 
            case_when(
              treat_desc == "Control (-Tillage -Lime)" ~ "Control",
@@ -146,10 +195,10 @@ strips <- strips %>%
 ################################################################################
 ## Add some clms AND Retain only a subset of clms
 
-str(data.raw)
+str(data_sf)
 str(field_details)
 
-data.raw <- data.raw %>% 
+data_sf <- data_sf %>% 
   mutate(site = site_name,
          year = analysis.yr,
          field_observation = analysis.type,
@@ -158,10 +207,10 @@ data.raw <- data.raw %>%
          variable_units =  field_details$varibale_units
          ) 
 
-names(data.raw)
+names(data_sf)
 
 
-data.raw <- data.raw %>% 
+data_sf <- data_sf %>% 
   select(site,
          pt_id, treat, treat_desc, geometry,
          year,
@@ -169,129 +218,34 @@ data.raw <- data.raw %>%
          date_field_observation,   
          !!variable, # Base tidyeval approach (unquoting)
          # These are clms that might need modfiying
-         cluster3,
-         "NDVI_drone" )
+         cluster3#,
+        # "NDVI_drone" 
+        )
 
 
-data.raw <-data.raw %>% rename("target.variable" = !!variable)
+data_sf <-data_sf %>% rename("target.variable" = !!variable)
 
-str(data.raw)
+str(data_sf)
 
 
-write_sf(data.raw,
+write_sf(data_sf,
         paste0(headDir,"/10.Analysis/25/Processing_Jackie/", analysis.type, "_", analysis.yr,".shp"))
 
-rm( data.raw, analysis.type, variable , field_details)
+
+# Extract coordinates and write to CSV
+data_sf_csv <- data_sf %>%
+  mutate(easting = st_coordinates(.)[,1],
+         northing = st_coordinates(.)[,2],
+         crs = paste0("EPSG:", projetion_crs)) %>%  # Add CRS column
+  st_drop_geometry()  # Remove the geometry column
+str(data_sf_csv)
+
+# Write to CSV
+write.csv(data_sf_csv, 
+          paste0(headDir,"/10.Analysis/25/Processing_Jackie/", analysis.type, "_", analysis.yr,".csv"),
+          row.names = FALSE)
 
 
-###############################################################################
-#### ONCE I get confirmation of all the variable this will grow.
-
-###############################################################################
-### Collate the variables into one file for the site
-analysis.yr <- 25
-data1 <- "Emergence"
-file1 <- st_read(paste0(headDir,"/10.Analysis/25/Processing_Jackie/", 
-                         data1, "_", analysis.yr,".shp"))  
+rm( data_sf, analysis.type, variable , field_details)
 
 
-data2 <- "Peak_Biomass"
-file2 <- st_read(paste0(headDir,"/10.Analysis/25/Processing_Jackie/", 
-                        data2, "_", analysis.yr,".shp"))  
-
-
-#### Getting the clm names matching
-names(file1)
-names(file2)
-
-file1 <- file1 %>%
-  rename("trgt_vr" = "Total" , "zone" = "clustr3") %>%
-  mutate(NDVI_drone = "nothing_yet")
-
-file2 <- file2 %>%
-  rename(
-         #"trgt_vr" = "Total" , 
-         "zone" = "clustr3",
-         "NDVI_drone" = "NDVI_dr" )
-
-file1_2 <- rbind(file1, file2)
-names(file1_2)
-
-file1_2 <- file1_2 %>%
-  rename(date = dt_fld_,
-        fld_ob = fld_bsr ) %>% 
-  mutate(date = ymd_hms(date))
-  
-  
-str(file1_2)
-###############################################################################
-########Lots of zeros ? I think they should be re-coded as NA ##################
-###############################################################################
-
-file1_2 <- file1_2 %>%
-  mutate(across(c(trgt_vr), 
-                ~case_when(. == 0 ~ NA_real_,
-                           TRUE ~ .)))
-
-write_sf(file1_2,
-         paste0(headDir,"/10.Analysis/25/Processing_Jackie/", site_name,"_collated_data_raw_", analysis.yr,".shp"))
-
-
-
-
-##I think these steps should come later after the whole dataset is collated
-
-
-
-
-
-# ###############################################################################
-# ###############################################################################
-# ## Step 2) Clean observation data (if applicable)
-# 
-# ## Step 2.1) Clip to variable of interest and crop to trial area
-# names(data.raw)
-# 
-# 
-# data.crop <- st_crop(data.raw[,variable],strips)
-# names(data.crop)[1] <- "target.variable" #renames 1st clm heading with a generic name
-# 
-# if(clean.dat=="Yes"){ 
-#   Q1 <- quantile(data.crop$target.variable, 0.25)
-#   Q3 <- quantile(data.crop$target.variable, 0.75)
-#   
-#   IQR <- Q3 - Q1
-#   lower_bound <- Q1 - 1.5 * IQR
-#   upper_bound <- Q3 + 1.5 * IQR
-#   
-#   data.clean <- data.crop %>%
-#     filter(target.variable >= lower_bound & target.variable <= upper_bound)
-#   
-# }else{
-#   data.clean <- data.crop
-# }
-# 
-# rm(data.raw, data.crop, data_sf)
-# 
-# ###############################################################################
-# ## Step 3) Drill treatments and zones
-# 
-# 
-# treat.drilled <- st_intersection( data.clean,  strips)
-# 
-# zones.drilled <- terra::extract(zones,treat.drilled)
-# names(zones.drilled)[2] <- "zone" #renames 2nd clm heading with a generic name
-# 
-# all.dat <- na.omit(cbind(treat.drilled,zones.drilled))
-# 
-# rm(treat.drilled, zones.drilled)
-# ###############################################################################
-# ## Save outputs ready for the next step.
-# 
-# str(all.dat)
-# 
-# write_sf(all.dat, 
-#           paste0(headDir,"/10.Analysis/25/Processing_Jackie/", analysis.type, "_", analysis.yr,".shp"))
-# 
-# 
-# 
