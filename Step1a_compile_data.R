@@ -85,7 +85,11 @@ rm(boundary,strips,zones)
 
 #analysis.type <- "Emergence" #
 #analysis.type <- "Peak_Biomass" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
-analysis.type <- "Maturity" # N
+#analysis.type <- "Maturity_biomass" # Maturity_biomass
+#analysis.type <- "Maturity_yield" # 
+#analysis.type <- "Maturity_TKW" # 
+analysis.type <- "Maturity_HI" # 
+
 #analysis.type <- "Harvest" # N
 
 #analysis.type <- "InSeason" ## ? not sure what this is
@@ -145,28 +149,28 @@ str(data.pts_proj)
 ### some quirky stuff to sort ###
 ## at Walpeup MRS125 maturity sample has tow pt with 28 called 28.1 and 28.2
 
-# dat.raw <- dat.raw %>%
-#   mutate(Point = case_when(
-#     Point == 28.1 ~ 28,
-#     Point == 28.2 ~ 28,
-#     TRUE ~ Point
-#   )) %>%
-#   group_by(Project, Location, Paddock, Point) %>%
-#   summarise(
-#     `Dry Biomass` = mean(`Dry Biomass`, na.rm = TRUE),
-#     Bag = mean(Bag, na.rm = TRUE),
-#     `Net Biomass (g)` = mean(`Net Biomass (g)`, na.rm = TRUE),
-#     `Dry Biomass (t/ha)` = mean(`Dry Biomass (t/ha)`, na.rm = TRUE),
-#     `Grain (g)` = mean(`Grain (g)`, na.rm = TRUE),
-#     `Grain Bag (g)` = mean(`Grain Bag (g)`, na.rm = TRUE),
-#     `Net Grain (g)` = mean(`Net Grain (g)`, na.rm = TRUE),
-#     `Grain Yield (t/ha)` = mean(`Grain Yield (t/ha)`, na.rm = TRUE),
-#     `250 g/w` = mean(`250 g/w`, na.rm = TRUE),
-#     `1000 gw (g)` = mean(`1000 gw (g)`, na.rm = TRUE),
-#     `Harvest Index %` = mean(`Harvest Index %`, na.rm = TRUE),
-#     Notes = first(Notes),
-#     .groups = "drop"
-#   )
+dat.raw <- dat.raw %>%
+  mutate(Point = case_when(
+    Point == 28.1 ~ 28,
+    Point == 28.2 ~ 28,
+    TRUE ~ Point
+  )) %>%
+  group_by(Project, Location, Paddock, Point) %>%
+  summarise(
+    `Dry Biomass` = mean(`Dry Biomass`, na.rm = TRUE),
+    Bag = mean(Bag, na.rm = TRUE),
+    `Net Biomass (g)` = mean(`Net Biomass (g)`, na.rm = TRUE),
+    `Dry Biomass (t/ha)` = mean(`Dry Biomass (t/ha)`, na.rm = TRUE),
+    `Grain (g)` = mean(`Grain (g)`, na.rm = TRUE),
+    `Grain Bag (g)` = mean(`Grain Bag (g)`, na.rm = TRUE),
+    `Net Grain (g)` = mean(`Net Grain (g)`, na.rm = TRUE),
+    `Grain Yield (t/ha)` = mean(`Grain Yield (t/ha)`, na.rm = TRUE),
+    `250 g/w` = mean(`250 g/w`, na.rm = TRUE),
+    `1000 gw (g)` = mean(`1000 gw (g)`, na.rm = TRUE),
+    `Harvest Index %` = mean(`Harvest Index %`, na.rm = TRUE),
+    Notes = first(Notes),
+    .groups = "drop"
+  )
 
 
 dat.all <- inner_join(data.pts_proj,dat.raw, by = join_by("pt_id" == "Point"))
