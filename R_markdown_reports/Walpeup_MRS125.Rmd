@@ -11,29 +11,214 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Site description
 
-| **Rainfall Metric** | **Details** |
-|---------------------|-------------|
-| Met file | |
-| Average annual rainfall | |
-| GS rainfall | |
-| Study years and deciles | |
-| Crop type (variety) | |
-| Dates of sowing | |
-| Dates of harvest | |
-
-
-```{r cars}
-summary(cars)
+```{r load_libary, include=FALSE}
+library(ggplot2)
+library(readxl)
+library(tidyverse)
+library(lubridate)
+library(data.table)
+library(stringr)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r site, include=FALSE}
+site_report <- "Walpeup"
+
+dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
+headDir <- paste0(dir, "/work/Output-1/", site_number)
+
+
+analysis.yr <- "25"
+
+metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
+metadata_file_name <- "names of treatments per site 2025 metadata and other info TEMP.xlsx"
+#metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+# Walpeup MRS125
+### Rainfall and Trial data
+
+```{r list of sites, echo=FALSE}
+list_of_sites <- data.frame(
+    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello"), ### add more here when you have the info
+    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000"),
+    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85"),
+    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78"),
+    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC")
+    )
+
+
+
+
+
+# Create a caption for the sites table
+caption_text <- "<b style='font-size: 18px;'>Site Information</b>"
+
+# Display the filtered sites table
+DT::datatable(list_of_sites %>% filter(Name == site_report),
+              options = list(
+                dom = 't',
+                ordering = FALSE,
+                pageLength = 10
+              ),
+              rownames = FALSE,
+              caption = htmltools::HTML(caption_text),
+              escape = FALSE)
+ 
+``` 
+
+
+
+```{r imprort daily met season type, echo=FALSE}
+
+file_path_input_data<-file.path("H:","Output-1", "0.Site-info", "Climate", "Decile_tables")
+
+met_station_number <- list_of_sites %>% 
+  filter(Name == site_report) %>% 
+  pull(Number)  # Use pull() to get the value, not a data frame
+
+# List all CSV files
+list_of_files <- list.files(path = file_path_input_data, pattern = ".csv")
+
+# Find the file containing the met station number
+file_to_read <- list_of_files[grep(paste0("Daily_met_file_season types_", met_station_number), list_of_files)]
+
+file_to_read2 <- list_of_files[grep(paste0("Year_with_Deciles_", met_station_number), list_of_files)]
+
+# Read the file
+decile_data <- read.csv(file.path(file_path_input_data, file_to_read))
+# Read the file
+years_with_decile <- read.csv(file.path(file_path_input_data, file_to_read2))
+
+
+```
+
+
+
+
+
+
+```{r rain stats, echo=FALSE}
+# Calculate rainfall statistics
+annual_rainfall <- decile_data %>%
+  group_by(year) %>%
+  summarise(annual_rain = sum(Rain, na.rm = TRUE)) %>%
+  summarise(avg_annual_rainfall = mean(annual_rain, na.rm = TRUE)) %>%
+  pull(avg_annual_rainfall)
+
+summer_rainfall <- decile_data %>%
+  filter(season_summer == "summer") %>%
+  group_by(year) %>%
+  summarise(summer_rain = sum(Rain, na.rm = TRUE)) %>%
+  summarise(avg_summer_rainfall = mean(summer_rain, na.rm = TRUE)) %>%
+  pull(avg_summer_rainfall)
+
+gs_rainfall <- decile_data %>%
+  filter(season_GS == "gs") %>%
+  group_by(year) %>%
+  summarise(gs_rain = sum(Rain, na.rm = TRUE)) %>%
+  summarise(avg_gs_rainfall = mean(gs_rain, na.rm = TRUE)) %>%
+  pull(avg_gs_rainfall)
+
+# Create a summary table
+rainfall_summary <- data.frame(
+  `Rainfall Metric` = c("Met Station Number",
+                        "Station Name",
+                        "Average Annual Rainfall (mm)", 
+                        "Average Summer Rainfall (1 Nov - 1 Apr) (mm)", 
+                        "Average GS Rainfall (1 Apr - 15 Oct) (mm)"),
+  Value = c(unique(decile_data$Number),
+            unique(decile_data$Name),
+            round(annual_rainfall, 1),
+            round(summer_rainfall, 1),
+            round(gs_rainfall, 1)),
+  check.names = FALSE
+)
+
+
+# Display with DT::datatable
+caption_text <- "<b style='font-size: 18px;'>Rainfall Summary Statistics</b>"
+
+DT::datatable(rainfall_summary,
+              options = list(
+                dom = 't',
+                ordering = FALSE,
+                pageLength = 5
+              ),
+              rownames = FALSE,
+              colnames = c("", ""),  # Empty column names
+              caption = htmltools::HTML(caption_text))
+```
+
+
+
+```{r metadata , echo=FALSE}
+Sowing_metadata <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "seasons") %>% 
+  filter(Site == site_number) %>% 
+  filter(Site == site_number )
+
+Sowing_metadata <- left_join(Sowing_metadata, years_with_decile, join_by(Year == year))
+
+
+# Select and format relevant columns in the correct order
+sowing_table <- Sowing_metadata %>%
+  select(Year, Crop, Variety, `Sowing date`, `Harvest date`, 
+         gs_sum_rain, summer_sum_rain, gs_decile, summer_decile) %>%
+  mutate(
+    `Sowing date` = format(`Sowing date`, "%d %b %Y"),
+    `Harvest date` = as.character(`Harvest date`)  # Convert logical NA to character
+  ) %>%
+  rename(
+    `GS Rainfall (mm)` = gs_sum_rain,
+    `Summer Rainfall (mm)` = summer_sum_rain,
+    `GS Decile` = gs_decile,
+    `Summer Decile` = summer_decile
+  )
+
+# Create caption from unique values
+gs_period <- unique(Sowing_metadata$GS_period)[1]
+summer_period <- unique(Sowing_metadata$summer_period)[1]
+years_included <- unique(Sowing_metadata$Years_included)[1]
+
+caption_text <- paste0("Crop Sowing and Rainfall Summary<br>",
+                       "GS Period: ", gs_period, " | ",
+                       "Summer Period: ", summer_period, " | ",
+                       "Years Included: ", years_included)
+
+# Create caption from unique values
+gs_period <- unique(Sowing_metadata$GS_period)[1]
+summer_period <- unique(Sowing_metadata$summer_period)[1]
+years_included <- unique(Sowing_metadata$Years_included)[1]
+
+caption_text <- paste0("<b style='font-size: 18px;'>Trail Years Sowing and Rainfall Summary</b><br>",
+                       "GS Period: ", gs_period, " | ",
+                       "Summer Period: ", summer_period, " | ",
+                       "Years Included: ", years_included)
+
+# Display with DT::datatable
+DT::datatable(sowing_table,
+              options = list(
+                dom = 't',
+                ordering = FALSE,
+                pageLength = 10
+              ),
+              rownames = FALSE,
+              caption = htmltools::HTML(caption_text),
+              escape = FALSE)
+```
+
+### Soil constraints at site
+
+Need some information here….
+
+
+###Management zones:
+Layers used to define management zone
+Map of management zone.
+
