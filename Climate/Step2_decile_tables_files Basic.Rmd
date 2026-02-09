@@ -1,0 +1,484 @@
+---
+title: "Step 2 creating decile tables basic"
+author: "Jackie"
+date: "2025-04-02"
+output: html_document
+---
+
+```{r load_libary, include=FALSE}
+library(ggplot2)
+library(readxl)
+library(tidyverse)
+library(lubridate)
+library(data.table)
+library(stringr)
+```
+
+# Workflow for analysing climate data creating decile tables and forecasting yields.
+* Series of R markdown. Best to run these in order, but once you have historical yields step 2 and 3 they don’t need to be repeated to get a yield forecast.  
+**Step 1** 
+ *	Download patch point met file, tidy up and saved to directory. User to specify the site number.  
+**Step 2** 
+*	User defined site, and ‘season’.
+*	Create plot sum of rain, per year, per season for site selected
+*	Create historical files 1. Decile table for GS. 2. Decile table summer season.
+*	File for each year with sum of rain per year and season type.  
+**Step 3**
+*	User defined site creates yield potential for decile years, using baseline and frontier approach.
+*	Creates plot  
+**Step 4**
+*	User defined site creates yield forecast for decile years, using baseline and frontier approach for defined dates
+*	Creates plot  
+
+## How to defined the start and end of growing season
+* The default is 1/4 (1st April) to 15/10 (15th Oct)
+* If you want to change this modified the below code chunk.
+
+```{r define start and end of GS, echo=FALSE}
+
+
+Day_start_GS_rainfall <- 1
+Month_start_GS_rainfall <- 4
+    
+
+Day_end_GS_rainfall <- 15
+Month_end_GS_rainfall <- 10
+      
+
+```
+
+
+## How to defined the start and end of summer months
+* The default is 1/11 (1st Nov) to 31/03 (31th March)
+* If you want to change this modified the below code chunk.
+
+```{r define start and end of summer months, echo=FALSE}
+
+
+
+### summer dates after GS
+Day_start_Summer_rainfall_after_GS <- 1
+Month_start_summer_rainfall_after_GS <- 11
+
+Day_end_summer_rainfall_after_GS <- 31 
+Month_end_summer_rainfall_after_GS <- 12
+
+### summer dates before GS
+Day_start_Summer_rainfall_before_GS <- 1
+Month_start_summer_rainfall_before_GS <- 1
+
+Day_end_summer_rainfall_before_GS <- 1 # if you want this to be the 31 /3 you need to add a day ie 1/4
+Month_end_summer_rainfall_before_GS <- 4
+      
+
+```
+
+## Choose what site you want to create decile table for.
+
+
+```{r list of sites, echo=FALSE}
+list_of_sites <- data.frame(
+    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello"), ### add more here when you have the info
+    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000"),
+    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85"),
+    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78"),
+    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC")
+    )
+
+DT::datatable(list_of_sites)
+
+```
+
+
+## List of files in step 1
+* Looking in this folder.
+* If it is in another location change the bellow code chuck.(file_path_input_data)
+* "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}/work/Output-2/Analysis/Scripts/Jackie/Downloaded_files"
+
+```{r list of sites with decile tables, echo=FALSE}
+
+ file_path_input_data<-file.path("H:","Output-1", "0.Site-info", "Climate", "Downloaded_files")
+
+#"H:/Output-1/0.Site-info/Climate/Downloaded_files"
+
+list_of_file <- list.files(path = file_path_input_data, pattern = ".csv")
+list_of_file <- as.data.frame(list_of_file)
+DT::datatable(list_of_file)
+ 
+```
+
+## Select the site number
+* create a new variable in the below code chuck that will be used for the analysis
+* Shiny application would be nice but then I have problem saving the output.
+
+```{r sites_selction, echo=FALSE}
+ site_selected <- "76065"
+print(site_selected)
+```
+## Download the **Neater met file**  
+
+```{r sites_selction_download, echo=FALSE}
+
+path <-  file.path("H:","Output-1", "0.Site-info", "Climate", "Downloaded_files")
+          
+df <- read.csv(paste0(path, "/Neater_file_", site_selected,  ".csv")) 
+
+
+## add a clm with two dates marked as start and end of GS
+df <- df %>% mutate(
+  start_end_GS_date = case_when(
+    month == Month_start_GS_rainfall & day_of_month == Day_start_GS_rainfall ~ "start_gs",
+    month == Month_end_GS_rainfall & day_of_month == Day_end_GS_rainfall ~ "end_gs",
+    TRUE ~ NA))
+
+### fill the blanks
+
+df <- df %>% fill(start_end_GS_date) %>%
+  mutate(
+    season_GS = case_when(
+      start_end_GS_date == "start_gs" ~ "gs",
+      TRUE ~ "other"))
+
+df <- df %>% select(-start_end_GS_date)
+
+
+## add a clm with two dates marked as start and end of Summer
+
+df <- df %>% mutate(
+  start_end_summer_date = case_when(
+    #before GS
+    month == Month_start_summer_rainfall_before_GS & 
+      day_of_month == Day_start_Summer_rainfall_before_GS ~ "start_summer", 
+    month == Month_end_summer_rainfall_before_GS & 
+      day_of_month == Day_end_summer_rainfall_before_GS ~ "end_summer",
+    
+    #after GS
+    month == Month_start_summer_rainfall_after_GS & 
+      day_of_month == Day_start_Summer_rainfall_after_GS ~ "start_summer", 
+    month == Month_end_summer_rainfall_after_GS & 
+      day_of_month == Day_end_summer_rainfall_after_GS ~ "end_summer", 
+    
+        TRUE ~ NA))
+
+### fill the blanks
+
+df <- df %>% fill(start_end_summer_date) %>%
+  mutate(
+    season_summer = case_when(
+      start_end_summer_date == "start_summer" ~ "summer",
+      month == 12 & day_of_month == 31 ~ "summer",
+      TRUE ~ "other"))
+
+df <- df %>% select(-start_end_summer_date)
+
+
+df <- df %>% mutate(
+  season = (case_when(
+    season_summer == "summer" ~ "summer",
+    season_GS == "gs" ~ "gs",
+    TRUE ~ "other"
+  )))
+
+      
+``` 
+
+#### Date range of file you have selected.
+```{r sites_selction_date range, echo=FALSE}
+
+#File start date and end date
+paste("Start date in file is: ",
+      min(df$Date),
+      ". End date in file is: ",
+      max(df$Date))
+      
+ 
+paste("Site Name (BOM): ", unique(df$Name),
+      ". Site Number (BOM): ", unique(df$Number)
+      )
+           
+
+GS_defined_as <- paste0(
+  Day_start_GS_rainfall, "/", Month_start_GS_rainfall,
+  " to ", Day_end_GS_rainfall, "/", Month_end_GS_rainfall)
+
+summer_defined_as <- paste0(
+  Day_start_Summer_rainfall_after_GS, "/", Month_start_summer_rainfall_after_GS,
+  " to ", Day_end_summer_rainfall_before_GS, "/", Month_end_summer_rainfall_before_GS)
+
+paste("summer month: ", summer_defined_as)
+paste("GS season: ", GS_defined_as)
+
+                
+      
+```  
+
+### Do you want to use this full data set?
+* The default is 1/1/1900 to 31/12/2025
+* If you want to change it modify the below code chunk.
+
+```{r subset date range, echo=FALSE}
+df_all_date <- df #keep this
+
+start <- "1900-01-01"
+end <- "2025-12-31"
+
+### Filter dataset based on years 
+df <- df %>% filter(between(Date, as.Date(start), as.Date(end)))
+
+```
+
+## Plot rain for each season type
+
+```{r plot rain by season type, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+plot1 <- df %>%
+   filter(season!= "other") %>% 
+    group_by(year, season) %>%
+    summarise(sum_rain_season = sum(Rain, na.rm = TRUE)) %>%
+    
+    
+    ggplot(aes(x = year, y = sum_rain_season, fill = season)) +
+    geom_bar(stat = "identity") +
+    labs(
+      title = "Sum of rain per year",
+      subtitle = paste0(
+        "Station name: ",
+        distinct(df, Name)
+      ),
+      
+       caption = paste0("Years included : ",
+                        year(min(df$Date)) ,
+                        " to ",
+                        year(max(df$Date)),
+                       ". GS defined as: ", 
+                         GS_defined_as),
+      
+      y = "sum of rain")
+plot1
+
+```
+
+## GS decile table 
+
+```{r decile table GS, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+
+  
+  gs_rain <- df %>%
+    filter(season!= "other") %>% 
+    group_by(year, season) %>%
+    summarise(sum_rain_season = sum(Rain, na.rm = TRUE)) %>%
+    filter(season == "gs")
+  
+  ## 5a. GS ----------------------------------------------------------------------
+#the percentiles for each year.
+
+GS_decile_max_rain <- quantile(gs_rain$sum_rain_season, c(.1, .2, .3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
+GS_deciles_names <- c("decile_1", "decile_2", "decile_3", "decile_4", "decile_5", "decile_6", "decile_7", "decile_8", "decile_9", "decile_10")
+
+GS_decile_table <- data.frame(GS_decile_max_rain, GS_deciles_names, row.names = NULL)
+GS_decile_table <- mutate(GS_decile_table, GS_decile_min_rain = lag(GS_decile_max_rain+0.1))
+
+
+#add in the min value to table
+GS_decile_table[1,3] <-  min(gs_rain$sum_rain_season)
+GS_decile_table <- GS_decile_table %>%  select (GS_deciles_names, GS_decile_min_rain, GS_decile_max_rain)
+
+
+ GS_decile_table <- GS_decile_table %>% 
+   mutate(Station_name = unique(df$Name),
+          Station_number = unique(df$Number),
+           Years_included = paste0(
+                                   year(min(df$Date)) ,  " to ", 
+                                   year(max(df$Date))),
+          GS_period =   GS_defined_as,
+          summer_period =   summer_defined_as)
+          
+                         
+
+GS_decile_table_df <- as.data.frame(GS_decile_table)
+GS_decile_table_df <- GS_decile_table_df %>% mutate(across(where(is.numeric), round, 2))
+#won't save because its reactive - I cant work it out
+
+DT::datatable(GS_decile_table_df)
+
+```
+
+## Summer decile table 
+
+```{r decile table Summer, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+  
+  summer_rain <- df %>%
+    filter(season!= "other") %>% 
+    group_by(year, season) %>%
+    summarise(sum_rain_season = sum(Rain, na.rm = TRUE)) %>%
+    filter(season == "summer")
+  
+  ## 5b. Summer ----------------------------------------------------------------------
+#the percentiles for each year.
+
+summer_decile_max_rain <- quantile(summer_rain$sum_rain_season, c(.1, .2, .3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
+summer_deciles_names <- c("decile_1", "decile_2", "decile_3", "decile_4", "decile_5", "decile_6", "decile_7", "decile_8", "decile_9", "decile_10")
+
+summer_decile_table <- data.frame(summer_decile_max_rain, summer_deciles_names, row.names = NULL)
+summer_decile_table <- mutate(summer_decile_table, summer_decile_min_rain = lag(summer_decile_max_rain+0.1))
+
+
+#add in the min value to table
+summer_decile_table[1,3] <-  min(summer_rain$sum_rain_season)
+summer_decile_table <- summer_decile_table %>%  select (summer_deciles_names, summer_decile_min_rain, summer_decile_max_rain)
+
+
+ summer_decile_table <- summer_decile_table %>% 
+   mutate(Station_name = unique(df$Name),
+          Station_number = unique(df$Number),
+           Years_included = paste0(
+                                   year(min(df$Date)) ,  " to ", 
+                                   year(max(df$Date))),
+          GS_period =   GS_defined_as,
+          summer_period =   summer_defined_as
+          )
+          
+                         
+
+summer_decile_table_df <- as.data.frame(summer_decile_table)
+summer_decile_table_df <- summer_decile_table_df %>% mutate(across(where(is.numeric), round, 2))
+#won't save because its reactive - I cant work it out
+
+
+  
+DT::datatable(summer_decile_table_df)
+```
+
+### Assign decile to each year
+* Create a dataframe with year, summer rain, GS rain, summer decile, winter decile.
+
+```{r years rainfall sum decile, echo=FALSE, message=FALSE, warning=FALSE}
+
+gs_rain <- gs_rain %>%
+  mutate(
+    decile = case_when(
+      between(round(sum_rain_season, 1), round(GS_decile_table[1,2],1) ,round(GS_decile_table[1,3],1) ) ~ "decile_1",
+      between(round(sum_rain_season, 1), round(GS_decile_table[2,2],1) ,round(GS_decile_table[2,3],1) ) ~ "decile_2",
+      between(round(sum_rain_season, 1), round(GS_decile_table[3,2],1) ,round(GS_decile_table[3,3],1) ) ~ "decile_3",
+      between(round(sum_rain_season, 1), round(GS_decile_table[4,2],1) ,round(GS_decile_table[4,3],1) ) ~ "decile_4",
+      between(round(sum_rain_season, 1), round(GS_decile_table[5,2],1) ,round(GS_decile_table[5,3],1) ) ~ "decile_5",
+      between(round(sum_rain_season, 1), round(GS_decile_table[6,2],1) ,round(GS_decile_table[6,3],1) ) ~ "decile_6",
+      between(round(sum_rain_season, 1), round(GS_decile_table[7,2],1) ,round(GS_decile_table[7,3],1) ) ~ "decile_7",
+      between(round(sum_rain_season, 1), round(GS_decile_table[8,2],1) ,round(GS_decile_table[8,3],1) ) ~ "decile_8",
+      between(round(sum_rain_season, 1), round(GS_decile_table[9,2],1) ,round(GS_decile_table[9,3],1) ) ~ "decile_9",
+      between(round(sum_rain_season, 1), round(GS_decile_table[10,2],1) ,round(GS_decile_table[10,3],1) ) ~ "decile_10",
+      
+      TRUE                      ~ "other"
+    )
+  )
+
+
+gs_rain <- gs_rain %>% 
+  mutate(Station_name = paste0(distinct(df, Name)),
+         Station_number = paste0(distinct(df, Number)) ,
+         Years_included = paste0(year(start) ," to ",  year(end)),
+         GS_period =   GS_defined_as,
+         summer_period =   summer_defined_as 
+  )
+
+gs_rain <- gs_rain %>%  rename(gs_sum_rain = sum_rain_season,
+                               gs_decile = decile) %>%   select(- season)
+summer_rain <- summer_rain %>%
+  mutate(
+    decile = case_when(
+      between(round(sum_rain_season, 1), round(summer_decile_table[1,2],1) ,round(summer_decile_table[1,3],1) ) ~ "decile_1",
+      between(round(sum_rain_season, 1), round(summer_decile_table[2,2],1) ,round(summer_decile_table[2,3],1) ) ~ "decile_2",
+      between(round(sum_rain_season, 1), round(summer_decile_table[3,2],1) ,round(summer_decile_table[3,3],1) ) ~ "decile_3",
+      between(round(sum_rain_season, 1), round(summer_decile_table[4,2],1) ,round(summer_decile_table[4,3],1) ) ~ "decile_4",
+      between(round(sum_rain_season, 1), round(summer_decile_table[5,2],1) ,round(summer_decile_table[5,3],1) ) ~ "decile_5",
+      between(round(sum_rain_season, 1), round(summer_decile_table[6,2],1) ,round(summer_decile_table[6,3],1) ) ~ "decile_6",
+      between(round(sum_rain_season, 1), round(summer_decile_table[7,2],1) ,round(summer_decile_table[7,3],1) ) ~ "decile_7",
+      between(round(sum_rain_season, 1), round(summer_decile_table[8,2],1) ,round(summer_decile_table[8,3],1) ) ~ "decile_8",
+      between(round(sum_rain_season, 1), round(summer_decile_table[9,2],1) ,round(summer_decile_table[9,3],1) ) ~ "decile_9",
+      between(round(sum_rain_season, 1), round(summer_decile_table[10,2],1) ,round(summer_decile_table[10,3],1) ) ~ "decile_10",
+      
+      TRUE                      ~ "other"
+    )
+  )
+
+
+summer_rain <- summer_rain %>%  rename(summer_sum_rain = sum_rain_season,
+                                       summer_decile = decile) %>% 
+  select(- season)
+
+Year_with_Deciles <- left_join(gs_rain, summer_rain)
+Year_with_Deciles <- Year_with_Deciles %>% select(
+  year,
+  Station_name ,
+  Station_number,
+  gs_decile,
+  gs_sum_rain,
+  summer_decile ,
+  summer_sum_rain,
+  GS_period ,
+ summer_period,
+  Years_included )
+
+
+rm(gs_rain, summer_rain)
+
+DT::datatable(Year_with_Deciles)
+```
+
+## Save outputs 
+* Summer decile table
+* GS decile table
+* Year with decile info and rainfall info per year and season type (GS, summer)
+* Plot of rainfall sum per year and season type
+* Daily met file with site info and season type but all date (df_all_date)
+
+"\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\0.Site-info\Climate\Decile_tables"
+
+
+
+
+```{r save files, echo=FALSE, message=FALSE, warning=FALSE}
+
+Files_saved <- "H:/Output-1/0.Site-info/Climate/Decile_tables/"
+               
+
+#decile tables
+# GS_decile_table_df
+# summer_decile_table_df
+
+write_csv(GS_decile_table_df, 
+          file =paste0(Files_saved, "GS_decile_table_df_", site_selected, ".csv"))
+write_csv(summer_decile_table_df, 
+          file =paste0(Files_saved, "summer_decile_table_df_", site_selected, ".csv"))
+
+#Year_with_Deciles
+write_csv(Year_with_Deciles, 
+          file =paste0(Files_saved, "Year_with_Deciles_", site_selected, ".csv"))
+
+#plot
+ ggsave(plot = plot1,
+       filename = paste0(Files_saved,"plot1_sum_rain_per_yr_summer_GS", site_selected, ".png"),
+       width = 20, height = 12, units = "cm")
+
+#df (Daily met file with site info and season type)
+write_csv(df_all_date, 
+          file =paste0(Files_saved, "Daily_met_file_season types_", site_selected, ".csv"))
+
+```
+
+```{r files in directory, echo=FALSE, message=FALSE, warning=FALSE}
+Files_saved <- "H:/Output-1/0.Site-info/Climate/Decile_tables/"
+files <- list.files(path = Files_saved,full.names = TRUE, pattern = ".csv")
+
+file_info <- file.info(files)
+file_info$file_name <- rownames(file_info)
+file_info <- file_info %>%
+  dplyr::select(atime)
+#names(file_info)
+DT::datatable(file_info)
+```

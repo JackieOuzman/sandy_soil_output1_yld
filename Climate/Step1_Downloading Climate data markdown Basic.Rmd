@@ -1,0 +1,214 @@
+---
+title: "Step1 update and download met files"
+author: "Jackie"
+date: "2025-04-01"
+output: html_document
+---
+
+```{r setup_install and load packages, include=FALSE}
+#install.packages("SWTools")
+library(SWTools)
+library(readr)
+library(DT)
+
+```
+
+# Workflow for analysing climate data creating decile tables and forecasting yields.
+* Series of R markdown. Best to run these in order, but once you have historical yields step 2 and 3 they don’t need to be repeated to get a yield forecast.  
+**Step 1** 
+ *	Download patch point met file, tidy up and saved to directory. User to specify the site number.  
+ *  This is super glitchy. If you run it as a rmarkdown the new data won' be updated so run this code chunck by code chunck.
+ 
+**Step 2** 
+*	User defined site, and ‘season’.
+*	Create plot sum of rain, per year, per season for site selected
+*	Create historical files 1. Decile table for GS. 2. Decile table summer season.
+*	File for each year with sum of rain per year and season type.  
+**Step 3**
+*	User defined site creates yield potential for decile years, using baseline and frontier approach.
+*	Creates plot  
+**Step 4**
+*	User defined site creates yield forecast for decile years, using baseline and frontier approach for defined dates
+*	Creates plot  
+
+
+## Choose what site you want to download met file.
+
+
+```{r list of sites, echo=FALSE}
+list_of_sites <- data.frame(
+    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello"), ### add more here when you have the info
+    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000"),
+    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85"),
+    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78"),
+    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC")
+    )
+
+DT::datatable(list_of_sites)
+
+
+ 
+```
+
+
+## Select the site number
+* create a new variable in the below code chuck that will be used for the analysis
+* Shiny application would be nice but then I have problem saving the output.
+
+```{r sites_selction, echo=FALSE}
+ site_selected <- "76065"
+print(site_selected)
+```
+
+
+
+## Download or update SILO patchpoint using SWTool package
+https://www.rdocumentation.org/packages/SWTools/versions/1.1.0/topics/SILODownload
+
+
+* This package download the file/s and saves it as text file with the name of the station
+* Here I have the files saved to  "H:/Output-2/Analysis/Scripts/Jackie/Downloaded_files"
+* Last day of data, in the format "YYYYMMDD". Will default to yesterday if not specified
+
+
+* If you need to change where this saved then change in the below code chuck.
+
+```{r Download_parameters, eval=FALSE, include=FALSE}
+
+Site_number <- site_selected
+email_jackie <-"jackie.ouzman@csiro.au"
+START <- "19000101"
+#FINISH <- "20050203"
+Files_saved <- "H:/Output-1/0.Site-info/Climate/Downloaded_files"
+
+
+## this will download patchpoint data and save it to file directory that is specified
+SILODownload(
+  SiteList= Site_number,
+  #SiteList = c("25006" ,"18113", "25003" ,"76065" ,"21012" ,"21002", "76000"),
+  username = email_jackie,
+  password = "gui",
+  path = Files_saved,
+  startdate = START,
+  enddate = ,
+  ssl = FALSE
+)
+
+```
+
+# Get the downloaded climate file 
+* This is patch point data that matches the site number
+* Ensure the directories are correct
+
+```{r clean_files, echo=FALSE, message=FALSE, warning=FALSE}
+Files_saved <- "H:/Output-1/0.Site-info/Climate/Downloaded_files"
+
+df <- read_table(
+  paste0(Files_saved,"/", site_selected,".txt"),
+  col_types =   cols(`Date2` = col_date(format = "%d-%m-%Y"),
+  `Day` =   col_number()  ,
+  `Radn` = col_number(),
+  `T.Max` = col_number(),
+  `T.Min` = col_number(),
+  `Rain` = col_number(),
+  `Evap` = col_number(),
+  `VP` = col_number()),
+        skip = 51
+      )
+#head(df)
+
+#remove first row
+df <- df %>% dplyr::filter( Date != "(yyyymmdd)")
+
+
+ # select clms
+
+df <- df %>%  dplyr::select(Date  ,
+                                     Day ,
+                                     Date2 ,
+                                     T.Max ,
+                                     T.Min ,
+                                     Rain ,
+                                     Evap   ,
+                                     Radn )
+ 
+df <- df %>%
+  dplyr::rename(day_of_year = Day,
+         Date_string = Date,
+         Date = Date2
+         ) %>%
+  dplyr::mutate(year = lubridate::year(Date),
+         month =lubridate::month(Date),
+         day_of_month = lubridate::day(Date),
+         month_name = lubridate::month(Date, label = TRUE)
+  )
+
+
+df_date_download <- read_csv(
+  paste0(Files_saved, "/",site_selected,".txt"),
+  col_names = FALSE, skip = 15) %>% dplyr::slice_head()
+
+
+df_date_download$X1 <- gsub('[^[:alnum:] ]', '', df_date_download$X1)
+df_date_download$X1 <- gsub(" Extracted from SILO BoM Only dataset on " , '', df_date_download$X1)
+
+
+
+
+
+
+
+df <- df %>% dplyr::mutate(Number = site_selected)
+df<- dplyr::left_join(df,list_of_sites)
+
+write_csv(df,
+          file = paste0(Files_saved,"/Neater_file_",site_selected,".csv"))
+
+DT::datatable(head(df))
+
+
+
+```
+
+## List of files and date last saved in directory
+```{r files in directory, echo=FALSE, message=FALSE, warning=FALSE}
+Files_saved <- "H:/Output-1/0.Site-info/Climate/Downloaded_files"
+files <- list.files(path = Files_saved,full.names = TRUE, pattern = ".csv")
+
+file_info <- file.info(files)
+file_info$file_name <- rownames(file_info)
+file_info <- file_info %>%
+  dplyr::select(atime)
+#names(file_info)
+DT::datatable(file_info)
+```
+
+# Just some checks is the script working?
+1. What have you just downloaded? 
+2. Does it match what was written to the download folder
+
+## what is the last date in the data just downloaded?
+```{r last date in the df, echo=FALSE, message=FALSE, warning=FALSE}
+max(df$Date)
+
+```
+## what is the last date in the file just downloaded?
+
+```{r site in the dowload folder, echo=FALSE, message=FALSE, warning=FALSE}
+
+file_path_input_data<-file.path("H:","Output-1", "0.Site-info", "Climate", "Downloaded_files")
+
+
+df_in_download_folder <- read.csv(paste0(file_path_input_data, "/Neater_file_", site_selected,  ".csv")) 
+
+
+print( max(df_in_download_folder$Date))
+
+```
+## what is the site in the file just downloaded?
+
+```{r last date in the dowload folder, echo=FALSE, message=FALSE, warning=FALSE}
+
+print( unique(df_in_download_folder$Name))
+       
+```

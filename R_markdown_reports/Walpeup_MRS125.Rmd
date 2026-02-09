@@ -1,0 +1,39 @@
+---
+title: "Paddock Report"
+Site: "Walpeup"
+Paddock: "MRS125"
+author: "Jackie Ouzman"
+date: "2026-02-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Site description
+
+| **Rainfall Metric** | **Details** |
+|---------------------|-------------|
+| Met file | |
+| Average annual rainfall | |
+| GS rainfall | |
+| Study years and deciles | |
+| Crop type (variety) | |
+| Dates of sowing | |
+| Dates of harvest | |
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
