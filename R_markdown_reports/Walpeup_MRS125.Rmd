@@ -291,7 +291,7 @@ DT::datatable(zones_table,
 
 ```
 
-#### Map of strips.
+#### Details strips.
 
 Date of amelioration:
 Additional information on strips:
@@ -379,5 +379,44 @@ DT::datatable(summary_table,
                 ordering = FALSE
               ))
 
+```
+
+#### Details Point sampling
+
+```{r point sampling, message=FALSE, warning=FALSE, include=FALSE}
+Point_sampling <- readxl::read_excel(
+  paste0(metadata_path, metadata_file_name),
+  sheet = "location of observation data") %>% 
+  filter(Site == site_number) %>% 
+  select("Site", "analysis_type", "Date_collected") %>%
+  mutate(Date_collected = as.Date(as.numeric(Date_collected), origin = "1899-12-30"))
+
+#names(Point_sampling)
+point_table <- Point_sampling %>%
+  select(analysis_type, Date_collected)
+```
+
+```{r point sampling table, echo=FALSE, message=FALSE, warning=FALSE}
+# Create caption with site number
+caption <- paste0("Point Sampling - Site: ", Point_sampling$Site[1])
+
+# Display as DT table
+DT::datatable(point_table,
+              caption = caption,
+              colnames = c('Analysis Type', 'Date Collected'),
+              rownames = FALSE,
+              options = list(
+                dom = 't',
+                ordering = FALSE
+              ))
 
 ```
+
+```{r map of smapling location 2026 , echo=FALSE, warning=FALSE}
+ 
+
+knitr::include_graphics(paste0(site_name, "_images/location of collected samples.png"))
+
+
+```
+
