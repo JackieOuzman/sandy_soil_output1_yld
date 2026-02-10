@@ -51,7 +51,7 @@ treatment_names <- readxl::read_excel(
 
 ################################################################################
 ## Read in field point data 
-merged_pt_sampling <- read_csv(paste0(headDir,"/10.Analysis/25/Processing_Jackie/merged/", 
+merged_pt_sampling <- read_csv(paste0(headDir,"/10.Analysis/25/Processing_Jackie/merged_pt_sampling/", 
                  "plant_sample_merged_2025.csv"))
 merged_pt_sampling <- merged_pt_sampling %>% 
   mutate(date_field_observation = as.Date(as.numeric(date_field_observation), origin = "1899-12-30"))
@@ -207,7 +207,7 @@ print(summary_stats.2)
 ###############            Write to file               #########################
 
 write.csv(summary_stats.2, 
-          paste0(headDir,'/10.Analysis/',analysis.yr,'/Processing_Jackie/Stats/',
+          paste0(headDir,'/10.Analysis/',analysis.yr,'/Processing_Jackie/Stats_pt_sampling/',
                  variable,'_summary_stats_strip.csv'),
           row.names = FALSE)
 
@@ -316,6 +316,8 @@ summary_stats.2 <- summary_stats_zone %>%
 print(summary_stats.2)
 
 write.csv(summary_stats.2, 
-          paste0(headDir,'/10.Analysis/',analysis.yr,'/Processing_Jackie/Stats/',
+          paste0(headDir,'/10.Analysis/',analysis.yr,'/Processing_Jackie/Stats_pt_sampling/',
                  variable,'_summary_stats_strip_zones.csv'),
           row.names = FALSE)
+
+
