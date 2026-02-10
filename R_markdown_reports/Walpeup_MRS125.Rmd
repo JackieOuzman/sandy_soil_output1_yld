@@ -19,6 +19,7 @@ library(tidyverse)
 library(lubridate)
 library(data.table)
 library(stringr)
+library(sf)
 ```
 
 
@@ -32,11 +33,17 @@ site_name <- "Walpeup_MRS125"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
+
 analysis.yr <- "25"
 
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
-metadata_file_name <- "names of treatments per site 2025 metadata and other info TEMP.xlsx"
-#metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
+#metadata_file_name <- "names of treatments per site 2025 metadata and other info TEMP.xlsx"
+metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
+
+file_path_details <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "location of file and details") %>% 
+  filter(Site == site_number)
 ```
 
 # Walpeup MRS125
@@ -196,7 +203,7 @@ gs_period <- unique(Sowing_metadata$GS_period)[1]
 summer_period <- unique(Sowing_metadata$summer_period)[1]
 years_included <- unique(Sowing_metadata$Years_included)[1]
 
-caption_text <- paste0("<b style='font-size: 18px;'>Trail Years Sowing and Rainfall Summary</b><br>",
+caption_text <- paste0("<b style='font-size: 18px;'>Trial Years Sowing and Rainfall Summary</b><br>",
                        "GS Period: ", gs_period, " | ",
                        "Summer Period: ", summer_period, " | ",
                        "Years Included: ", years_included)
@@ -218,7 +225,159 @@ DT::datatable(sowing_table,
 Need some information here….
 
 
-###Management zones:
-Layers used to define management zone
-Map of management zone.
+### Management zones:
 
+#### Layers used to define management zone
+(Please confirm this)
+
+```{r input for managmnet zone, echo=FALSE, warning=FALSE}
+ 
+
+knitr::include_graphics(paste0(site_name, "_images/covs_1_16.png"))
+knitr::include_graphics(paste0(site_name, "_images/covs_17_32.png"))
+
+
+# knitr::include_graphics(c(
+#   paste0(headDir, "/3.Covariates/7.Plots/covs_1_16.png"),
+#   paste0(headDir, "/3.Covariates/7.Plots/covs_17_32.png")
+# ))
+```
+
+#### Map of management zone.
+
+
+```{r map of managmnet zone, echo=FALSE, warning=FALSE}
+ 
+
+knitr::include_graphics(paste0(site_name, "_images/bounday_zones.png"))
+
+# knitr::include_graphics(c(
+#   paste0(headDir, "/3.Covariates/6.Clusters_Zones/FINAL/bounday_zones.png")
+# ))
+```
+
+
+```{r stats managmnet zone, message=FALSE, warning=FALSE, include=FALSE}
+zones <- st_read(
+  paste0(headDir,file_path_details$`location of zone shp`))
+
+
+zones_table <- zones %>%
+  st_drop_geometry() %>%  # Remove geometry column
+  mutate(
+    Zone = as.character(gridcode),
+    Area_ha = round(POLY_AREA, 0),
+    Percent = round(POLY_AREA / sum(POLY_AREA) * 100, 1)
+  ) %>%
+  select(Zone, Area_ha, Percent) %>%
+  bind_rows(
+    data.frame(
+      Zone = "Total",
+      Area_ha = sum(.$Area_ha),
+      Percent = 100.0  # Changed from Percen to Percent and set to 100
+    )
+  )
+```
+
+```{r stats managmnet zone table, echo=FALSE, message=FALSE, warning=FALSE}
+# Display as DT table
+DT::datatable(zones_table, 
+          colnames = c('Zone', 'Area (ha)', 'Percentage (%)'),
+          rownames = FALSE,
+          options = list(
+            dom = 't',
+            ordering = FALSE
+          ))
+
+```
+
+#### Map of strips.
+
+Date of amelioration:
+Additional information on strips:
+
+```{r map of strip , echo=FALSE, warning=FALSE}
+ 
+
+knitr::include_graphics(paste0(site_name, "_images/strips_vs1.png"))
+
+
+```
+
+
+```{r stats strips, message=FALSE, warning=FALSE, include=FALSE}
+zones <- st_read(
+  paste0(headDir,file_path_details$`location of zone shp`))
+strip <- st_read(
+  paste0(headDir,file_path_details$`trial.plan`))
+
+# Calculate dimensions for each polygon
+strip <- strip %>%
+  rowwise() %>%
+  mutate(
+    bb = list(st_bbox(geometry)),
+    x_dist = bb$xmax - bb$xmin,
+    y_dist = bb$ymax - bb$ymin,
+    Length_m = round(max(x_dist, y_dist), 0),
+    Width_m = round(min(x_dist, y_dist), 0),
+    Area_ha = round(as.numeric(st_area(geometry)) / 10000, 2)
+  ) %>%
+  ungroup() %>%
+  select(-bb, -x_dist, -y_dist)
+
+strip_dims <- strip %>%
+  st_drop_geometry() %>%
+  filter(treat_desc != "Buffer") %>%
+  select(Length_m, Width_m) %>%
+  slice(1)  # Get first row (they're all the same)
+strip_length <- strip_dims$Length_m
+strip_width <- strip_dims$Width_m
+
+```
+
+
+
+```{r stats strips with zone, message=FALSE, warning=FALSE, include=FALSE}
+
+# Join - attributes from zones added to strip based on overlap
+joined <- st_intersection(strip, zones)
+
+# Remove old area columns
+joined <- joined %>% select(-POLY_AREA, -Area_ha)
+
+# Recalculate area for the NEW intersected polygons
+joined <- joined %>%
+  mutate(Area_ha = round(as.numeric(st_area(geometry)) / 10000, 2))
+
+
+
+# Create summary table
+summary_table <- joined %>%
+  st_drop_geometry() %>%
+  filter(treat_desc != "Buffer") %>%
+  select(treat_desc, gridcode, Area_ha) %>%
+  mutate(Area_ha = round(Area_ha, 2)) %>%
+  pivot_wider(names_from = gridcode, 
+              values_from = Area_ha,
+              names_prefix = "Zone ") %>%
+  mutate(Total = rowSums(across(starts_with("Zone")), na.rm = TRUE))
+```
+
+
+
+```{r stats strips with zones, echo=FALSE, message=FALSE, warning=FALSE}
+# Create caption with strip dimensions
+caption <- paste0("Strip dimensions: ", strip_length, " m × ", strip_width, " m")
+
+# Display as DT table with caption
+DT::datatable(summary_table, 
+              caption = caption,
+              colnames = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3', 'Total (ha)'),
+              rownames = FALSE,
+              options = list(
+                dom = 't',
+                ordering = FALSE
+              ))
+
+
+```
