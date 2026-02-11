@@ -73,7 +73,7 @@ merged_pt_sampling <- merged_pt_sampling %>%
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-#variable <- "Harvest index" # 
+variable <- "Harvest index" # 
 
 
 
@@ -126,6 +126,8 @@ summary_stats <- df %>%
     min = min(target.variable, na.rm = TRUE),
     max = max(target.variable, na.rm = TRUE),
     median = median(target.variable, na.rm = TRUE),
+    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
+    Q3 = quantile(target.variable, 0.75, na.rm = TRUE),
     n_total = n(),                      # Total number of rows
     n_valid = sum(!is.na(target.variable)),     # Count of non-NA values
     n_na = sum(is.na(target.variable))  
@@ -142,35 +144,7 @@ control_group <- df %>%
   filter(treat == control.name)
 
 
-# # Then run t-tests
-# t_test_results <- df %>%
-#   filter(field_observation == variable) %>% 
-#   filter(treat != control.name) %>%  # Exclude the control group
-#   group_by(treat) %>%
-#   do({
-#     treatment_data <- .
-#     
-#     # Combine control and treatment data
-#     combined_data <- bind_rows(
-#       control_group %>% mutate(group = "Control"),
-#       treatment_data %>% mutate(group = "Treatment")
-#     )
-#     
-#     # Perform t-test using the column name as string
-#     formula_obj <- as.formula("target.variable ~ group")
-#     test_result <- t.test(formula_obj, data = combined_data)
-#     
-#     # Return tidy results
-#     broom::tidy(test_result)
-#   }) %>%
-#   ungroup() %>%
-#   mutate(adj_p_value = p.adjust(p.value, method = "bonferroni"),
-#          significance = ifelse(adj_p_value <= 0.1, "Significant", "Not Significant"))
-# 
-# 
-# 
-# print(t_test_results)
-# print(summary_stats)
+
 
 # Perform ANOVA
 anova <- aov(target.variable ~ treat, data = df)
@@ -211,7 +185,7 @@ write.csv(summary_stats.2,
                  variable,'_summary_stats_strip.csv'),
           row.names = FALSE)
 
-rm(summary_stats.2, sig.out, anova, letters, t_test_results, tukey, tukey_results)
+rm(summary_stats.2, sig.out, anova, t_test_results, tukey, tukey_results)
 
 
 

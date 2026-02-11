@@ -42,8 +42,8 @@ headDir_analysis_folder
 ### Load the metadata files
 
 # List all sheet names
-# sheet_names_metadata <- excel_sheets( paste0(metadata_path,metadata_file_name))
-# print(sheet_names_metadata)
+sheet_names_metadata <- excel_sheets( paste0(metadata_path,metadata_file_name))
+print(sheet_names_metadata)
 
 strip_names_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
@@ -57,6 +57,18 @@ strip_names_details <- strip_names_details %>%
          "Treatment name",
          "Order_in_paddock" ,
          "Colour_number_plot")
+
+Pt_sampling_details <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "location of observation data") %>% 
+  filter(Site == site_number)
+
+names(Pt_sampling_details)
+Pt_sampling_details <- Pt_sampling_details %>% 
+  select("variable_name" ,
+         "Date_collected" ,
+         "varibale_units") %>% 
+  mutate(variable_name = paste0(variable_name, "_Yr_", analysis.yr))
 
 ################################################################################
 ### List of files 
@@ -83,16 +95,23 @@ strips_zones_merged_stats_df <- read_csv(paste0(headDir_analysis_folder,
 ################################################################################
 #append the metadata
 strips_merged_stats_df <- left_join(strips_merged_stats_df, strip_names_details)
+names(strips_merged_stats_df)
+names(Pt_sampling_details)
+strips_merged_stats_df <- left_join(strips_merged_stats_df,
+                                      Pt_sampling_details,
+                                      join_by("analysis.type"  == "variable_name")) 
+
+
 
 ##################################################################################
 
-variable <- "Establishment" #
+#variable <- "Establishment" #
 #variable <- "Establishment CV" #
 #variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-#variable <- "Harvest index" # 
+variable <- "Harvest index" # 
 
 
 
@@ -105,6 +124,13 @@ names(strips_merged_stats_df)
 strips_merged_stats_df <- strips_merged_stats_df %>%
   mutate(treat = reorder(treat, Order_in_paddock),
   `Treatment name` = reorder(`Treatment name`, Order_in_paddock))
+str(strips_merged_stats_df)
+
+# get the units of the variable
+units_variable <- strips_merged_stats_df %>% 
+  filter(analysis.type == paste0(variable, "_Yr_", analysis.yr)) %>%
+  pull(varibale_units) %>% 
+  unique()
 
 site.bar.plot <-
   strips_merged_stats_df %>%
@@ -112,20 +138,22 @@ site.bar.plot <-
   mutate(treat = reorder(treat, Order_in_paddock)) %>%
   ggplot(aes(x = treat, y = mean, fill = `Treatment name`)) +
   geom_col(alpha = 0.7) +
+  geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(
-    aes(label = Significance),
-    vjust = -0.5,
+    aes(label = Significance, y = Q3),  # Position at Q3
+    vjust = -0.5,  # Move above Q3
     size = 5,
     fontface = "bold"
   ) +
   labs(
     title = "",
+    caption = "One-way ANOVA followed by Tukey's HSD post-hoc test at 95% confidence",
     x = NULL,
-    y = variable,
+    y = paste0(variable, "\n", units_variable),  # \n creates line break
     fill = NULL
   ) +
   scale_fill_manual(values = setNames(strips_merged_stats_df$Colour_number_plot, 
-                                      strips_merged_stats_df$`Treatment name`)) +  # Add this line
+                                      strips_merged_stats_df$`Treatment name`)) +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +
   theme_minimal() +
   theme(
@@ -133,6 +161,7 @@ site.bar.plot <-
     axis.title = element_text(size = 16),
     axis.text = element_text(size = 16),
     plot.title = element_text(size = 16, hjust = 0.5),
+    plot.caption = element_text(size = 10),
     legend.position = "bottom",
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
@@ -141,10 +170,8 @@ site.bar.plot <-
 site.bar.plot
 
 
+headDir_analysis_folder
 
-
-ggsave(paste0(headDir,'/10.Analysis/25/',analysis.type,
-              "/",subfolder1,
-              "/",subfolder2,"/qgis",
-              
-              '/summary-plot-whole-pdk.png'), site.bar.plot)
+ggsave(paste0(headDir_analysis_folder,"plots/",
+              variable,
+              '_strip_mean_ANOVA_plot.png'), site.bar.plot)
