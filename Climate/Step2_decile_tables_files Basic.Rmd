@@ -78,15 +78,14 @@ Month_end_summer_rainfall_before_GS <- 4
 
 ```{r list of sites, echo=FALSE}
 list_of_sites <- data.frame(
-    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello"), ### add more here when you have the info
-    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000"),
-    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85"),
-    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78"),
-    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC")
+    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello", "Crystal Brook"), ### add more here when you have the info
+    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000", "21016"),
+    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85",   "-33.35"),
+    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78", "138.21"),
+    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC", "SA")
     )
 
 DT::datatable(list_of_sites)
-
 ```
 
 
@@ -112,7 +111,7 @@ DT::datatable(list_of_file)
 * Shiny application would be nice but then I have problem saving the output.
 
 ```{r sites_selction, echo=FALSE}
- site_selected <- "76065"
+ site_selected <- "21016"
 print(site_selected)
 ```
 ## Download the **Neater met file**  
