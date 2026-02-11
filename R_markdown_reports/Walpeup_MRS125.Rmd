@@ -459,3 +459,36 @@ knitr::include_graphics(
 ##### Strip by zone
 
 Anlaysis performed but sample size is very low and results not plotted
+
+
+#### Results Yield data (off header).
+
+1. Data projected and thinned to 1m spacing
+2. No cleaning or trimming; yield not adjusted for moisture
+3. Outliers removed by visual inspection
+4. Data clipped to trial area boundaries
+5. Polygon ladders generated (10m length × strip width)
+6. Yield points within each polygon averaged
+7. Averaged values used for statistical analysis
+
+Note 2 headers operated at Walpeup MRS125, I am not able to work out where they are located
+
+
+```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
+ 
+
+knitr::include_graphics(
+  c(
+    paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
+    paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
+)
+
+# ## NB Results are here   
+# ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\1.Walpeup_MRS125\10.Analysis\2#5\###Processing_Jackie"
+# ## NB Analysis script is here
+# #"\\pentagon-gw\C$\Users\ouz001\working_from_home_post_Sep2022\sandy_soil_output1_yld\Yield_#Mointor_data"
+# 
+# # I have copied the plots over to the local drive so R markdown can access them.
+
+```
+
