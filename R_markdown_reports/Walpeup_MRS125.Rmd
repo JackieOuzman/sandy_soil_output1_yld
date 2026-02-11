@@ -471,16 +471,16 @@ Anlaysis performed but sample size is very low and results not plotted
 6. Yield points within each polygon averaged
 7. Averaged values used for statistical analysis
 
-Note 2 headers operated at Walpeup MRS125, I am not able to work out where they are located
+Note 2 headers operated at Walpeup MRS125, found it!
 
 
 ```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
  
 
 knitr::include_graphics(
-  c(
-    paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
-    paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
+  c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
+    paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"),
+  paste0(site_name, "_images/plots/", "yld data with 2 harvesters", ".png"))
 )
 
 # ## NB Results are here   
