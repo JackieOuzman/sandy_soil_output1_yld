@@ -21,16 +21,18 @@ library(readr)
 ################################################################################
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
+site_number <-"2.Crystal_Brook_Brians_House" # "1.Walpeup_MRS125"
+site_name <-  "Crystal_Brook_Brians_House"# "Walpeup_MRS125"
+
+
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
 analysis.yr <- "25"
 
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
-metadata_file_name <- "names of treatments per site 2025 metadata and other info TEMP.xlsx"
-#metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
+
+metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
 
 crs_used <- 4326 # Name: WGS 84 (World Geodetic System 1984) Type: Geographic coordinate system (latitude/longitude)
 projetion_crs <- 7854 #GDA2020 / MGA Zone 54 (EPSG:7854).
@@ -54,16 +56,17 @@ file_path_details <- readxl::read_excel(
 #Bring in the data for each field sampling event. These analysis.type are defined by Stirling
 
 #analysis.type <- "Establishment" #
-#analysis.type <- "Establishment CV" #
+analysis.type <- "Establishment CV" #
 #analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
-analysis.type <- "Harvest index" # 
+#analysis.type <- "Harvest index" # 
 
 
 
 
+field_details %>%  filter(Site == site_number)
 
 
 field_details <- readxl::read_excel(
@@ -79,14 +82,15 @@ treat.col.name <- "treat_desc"
 
 #################################################################################
 ### sometimes you will need to specify the sheet###
-dat.raw <-   read_excel(file.path(headDir,   field_details$data), sheet = "Jackie")
+dat.raw <-   read_excel(file.path(headDir,    field_details$data), sheet = "Jackie")
 #dat.raw <-   read_excel(file.path(headDir,   field_details$data), sheet = "Jackie_MRS125")
 data.pts <-  st_read   (file.path(headDir,   field_details$sampling_GPS))
 ## Note that the data in these 2 files do not always match
 
-data.pts_wgs <- st_transform(data.pts, crs= crs_used)
-data.pts_proj <- st_transform(data.pts_wgs, crs = projetion_crs)
-
+# data.pts_wgs <- st_transform(data.pts, crs= crs_used)
+# data.pts_proj <- st_transform(data.pts_wgs, crs = projetion_crs)
+#if no projection is needed
+data.pts_proj <-data.pts
 
 ################################################################################
 ##################### STOP AND CHECK ###########################################
@@ -95,13 +99,14 @@ data.pts_proj <- st_transform(data.pts_wgs, crs = projetion_crs)
 names(dat.raw)
 names(data.pts_proj) 
 
+## I cant trust that the "zone" or "cluster" always drop it from the dataset
+## I wonder if its the same story for the treatments?
 
-data.pts_proj <- data.pts_proj %>% select("pt_id", "geometry", "cluster3",  "treat" , "treat_desc" )
- 
+data.pts_proj <- data.pts_proj %>% dplyr::select(pt_id, geometry)
   
 names(dat.raw)
 
-dat.raw <- dat.raw %>%   select(pt_id, target.variable = all_of(analysis.type))  
+dat.raw <- dat.raw %>%   dplyr::select(pt_id, target.variable = all_of(analysis.type))  
   
 
 names(dat.raw)
@@ -129,7 +134,7 @@ names(data_sf)
 str(field_details)
 
 data_sf <- data_sf %>% 
-  mutate(site = site_name,
+  dplyr::mutate(site = site_name,
          year = analysis.yr,
          field_observation = analysis.type, 
          date_field_observation = field_details$Date_collected,
@@ -140,17 +145,15 @@ data_sf <- data_sf %>%
 names(data_sf)
 #
 data_sf <- data_sf %>% 
-  select(site,
-         pt_id, treat, treat_desc, geometry,
+  dplyr::select(site,
+         pt_id,  geometry,
          year,
          
          field_observation,
          date_field_observation,
          target.variable,
-         variable_units,
-         # These are clms that might need modfiying
-         cluster3#,
-        # "NDVI_drone" 
+         variable_units
+         
         )
 
 
