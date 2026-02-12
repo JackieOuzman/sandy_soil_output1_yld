@@ -1,7 +1,7 @@
 ---
 title: "Paddock Report"
-Site: "Walpeup"
-Paddock: "MRS125"
+Site: "Crystal Brook"
+Paddock: "Brians House"
 author: "Jackie Ouzman"
 date: "2026-02-08"
 output: html_document
@@ -25,11 +25,11 @@ library(sf)
 
 
 ```{r site, include=FALSE}
-site_report <- "Walpeup"
+site_report <- "Crystal Brook"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
+site_number <- "2.Crystal_Brook_Brians_House"
+site_name <- "Crystal_Brook_Brians_House"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
@@ -51,11 +51,11 @@ file_path_details <- readxl::read_excel(
 
 ```{r list of sites, echo=FALSE}
 list_of_sites <- data.frame(
-    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello"), ### add more here when you have the info
-    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000"),
-    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85"),
-    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78"),
-    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC")
+    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello", "Crystal Brook"), ### add more here when you have the info
+    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000", "21016"),
+    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85",   "-33.35"),
+    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78", "138.21"),
+    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC", "SA")
     )
 
 
@@ -249,10 +249,10 @@ knitr::include_graphics(paste0(site_name, "_images/covs_17_32.png"))
 ```{r map of managmnet zone, echo=FALSE, warning=FALSE}
  
 
-knitr::include_graphics(paste0(site_name, "_images/bounday_zones.png"))
+knitr::include_graphics(paste0(site_name, "_images/Zone map Jackie.png"))
 
 # knitr::include_graphics(c(
-#   paste0(headDir, "/3.Covariates/6.Clusters_Zones/FINAL/bounday_zones.png")
+#   paste0(headDir, "/3.Covariates/6.Clusters_Zones/FINAL/Zone map Jackie.png")
 # ))
 ```
 
@@ -265,7 +265,7 @@ zones <- st_read(
 zones_table <- zones %>%
   st_drop_geometry() %>%  # Remove geometry column
   mutate(
-    Zone = as.character(gridcode),
+    Zone = as.character(cluster), #gridcode
     Area_ha = round(POLY_AREA, 0),
     Percent = round(POLY_AREA / sum(POLY_AREA) * 100, 1)
   ) %>%
@@ -299,7 +299,7 @@ Additional information on strips:
 ```{r map of strip , echo=FALSE, warning=FALSE}
  
 
-knitr::include_graphics(paste0(site_name, "_images/strips_vs1.png"))
+knitr::include_graphics(paste0(site_name, "_images/Strips Jackie.png"))
 
 
 ```
@@ -353,11 +353,12 @@ joined <- joined %>%
 
 # Create summary table
 summary_table <- joined %>%
+  rename(Zone = cluster) %>% 
   st_drop_geometry() %>%
-  filter(treat_desc != "Buffer") %>%
-  select(treat_desc, gridcode, Area_ha) %>%
+  filter(treat_desc != "Outside Control" & treat_desc != "Buffer") %>%
+  select(treat_desc, Zone, Area_ha) %>%
   mutate(Area_ha = round(Area_ha, 2)) %>%
-  pivot_wider(names_from = gridcode, 
+  pivot_wider(names_from = Zone, 
               values_from = Area_ha,
               names_prefix = "Zone ") %>%
   mutate(Total = rowSums(across(starts_with("Zone")), na.rm = TRUE))
@@ -372,7 +373,7 @@ caption <- paste0("Strip dimensions: ", strip_length, " m × ", strip_width, " m
 # Display as DT table with caption
 DT::datatable(summary_table, 
               caption = caption,
-              colnames = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3', 'Total (ha)'),
+              colnames = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4','Total (ha)'),
               rownames = FALSE,
               options = list(
                 dom = 't',
