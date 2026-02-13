@@ -413,10 +413,10 @@ DT::datatable(point_table,
 
 ```
 
-```{r map of smapling location 2025 , echo=FALSE, warning=FALSE}
+```{r map of sampling location 2025 , echo=FALSE, warning=FALSE}
  
 
-knitr::include_graphics(paste0(site_name, "_images/location of collected samples.png"))
+#knitr::include_graphics(paste0(site_name, "_images/location of collected samples.png"))
 
 
 ```
@@ -428,6 +428,7 @@ knitr::include_graphics(paste0(site_name, "_images/location of collected samples
 One-way ANOVA followed by Tukey's HSD post-hoc test at 95% confidence (p < 0.05), where treatments sharing the same letter are not significantly different from each other, while treatments with different letters have statistically significant differences in their means.
 The error bars on the plot at the Q1 and Q3 values.
 
+Note: CB HO - still waiting for biomass at flowering (13/2/2025)
 
 ```{r Stats pt sampling results strips1, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
  
@@ -436,10 +437,11 @@ knitr::include_graphics(
   c(
     paste0(site_name, "_images/plots/", "Establishment", "_strip_mean_ANOVA_plot.png"),
     paste0(site_name, "_images/plots/", "Establishment CV", "_strip_mean_ANOVA_plot.png"),
-    paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
+    #paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
     
     paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_ANOVA_plot.png"),
     paste0(site_name, "_images/plots/", "Grain yield", "_strip_mean_ANOVA_plot.png"),
+    paste0(site_name, "_images/plots/", "Protein", "_strip_mean_ANOVA_plot.png"),
     paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_ANOVA_plot.png"),
     paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_ANOVA_plot.png")
     
@@ -447,7 +449,7 @@ knitr::include_graphics(
 )
 
 ## NB Results are here   
-## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\1.Walpeup_MRS125\10.Analysis\25\###Processing_Jackie"
+## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Processing_J#ackie"
 ## NB Analysis script is here
 #"\\pentagon-gw\C$\Users\ouz001\working_from_home_post_Sep2022\sandy_soil_output1_yld\Point_da#ta"
 
@@ -459,7 +461,19 @@ knitr::include_graphics(
 
 ##### Strip by zone
 
-Anlaysis performed but sample size is very low and results not plotted
+Anlaysis performed but sample size is very low and results not plotted.
+
+The code is running the following:
+
+ANOVA and post-hoc tests separately for each zone step-by-step.
+
+For each treatment in the zone column, it:
+1.	Runs an ANOVA to test if treatments differ significantly
+2.	Performs Tukey's HSD post-hoc test to identify which treatment pairs differ
+3.	Generates significance letters (a, b, c, etc.) for visualizing results
+
+Analyse treatment effects within each zone separately, accounting for spatial variation. Useful when different zones might respond differently to treatments.
+
 
 
 #### Results Yield data (off header).
@@ -472,20 +486,20 @@ Anlaysis performed but sample size is very low and results not plotted
 6. Yield points within each polygon averaged
 7. Averaged values used for statistical analysis
 
-Note 2 headers operated at Walpeup MRS125, found it!
+
 
 
 ```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
  
 
-knitr::include_graphics(
-  c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
-    paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"),
-  paste0(site_name, "_images/plots/", "yld data with 2 harvesters", ".png"))
-)
+# knitr::include_graphics(
+#   c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
+#     paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"),
+#   paste0(site_name, "_images/plots/", "yld data with 2 harvesters", ".png"))
+# )
 
 # ## NB Results are here   
-# ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\1.Walpeup_MRS125\10.Analysis\2#5\###Processing_Jackie"
+# ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\2#5\###Processing_Jackie"
 # ## NB Analysis script is here
 # #"\\pentagon-gw\C$\Users\ouz001\working_from_home_post_Sep2022\sandy_soil_output1_yld\Yield_#Mointor_data"
 # 

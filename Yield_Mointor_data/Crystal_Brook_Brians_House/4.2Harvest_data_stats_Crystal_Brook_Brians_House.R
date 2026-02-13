@@ -19,10 +19,13 @@ library(readr)
 ################################################################################
 ########################            Define the directory              ##########
 ################################################################################
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
+
+site_number <-"2.Crystal_Brook_Brians_House" 
+site_name <-  "Crystal_Brook_Brians_House"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <- "2.Crystal_Brook_Brians_House"
-site_name <- "Crystal_Brook_Brians_House"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 analysis.type <- "Harvest"
@@ -35,7 +38,7 @@ analysis.yr <- "25"
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
 metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
 
-crs_used <- 4326
+crs_used <- 7854
 ################################################################################
 ########################    Read in metadata info file names and path ##########
 ################################################################################
@@ -59,23 +62,24 @@ harvest_data_file <-  readxl::read_excel(
 ################################################################################
 
 ## get the list of all the file options
-harvest_files_all_options <- list.files(path = paste0(headDir, "/", harvest_data_file$files))
-harvest_files_all_options
-
-## select which file I will use
-harvest_files <- list.files(path = paste0(headDir, "/", harvest_data_file$files), pattern = ".csv")
-harvest_files
+ # harvest_files_all_options <- list.files(path = paste0(headDir, "/", harvest_data_file$files))
+ # harvest_files_all_options
+# 
+# ## select which file I will use
+# harvest_files <- list.files(path = paste0(headDir, "/", harvest_data_file$files), pattern = ".csv")
+# harvest_files
 
 # Load the file 
-# harvest_raw <- st_read(
-#   paste0(headDir,"/", harvest_data_file$files,harvest_files))
-harvest_raw_df <- read_csv(
-  paste0(headDir,"/", harvest_data_file$files,harvest_files))
-harvest_raw_df
+harvest_raw <- st_read(
+  paste0(headDir,"/", harvest_data_file$files))
 
-harvest_raw <- st_as_sf(harvest_raw_df, 
-                  coords = c("Longitude", "Latitude"),
-                  crs = 4326)  # WGS84 (standard lat/lon)
+# harvest_raw_df <- read_csv(
+#   paste0(headDir,"/", harvest_data_file$files,harvest_files))
+# harvest_raw_df
+# 
+# harvest_raw <- st_as_sf(harvest_raw_df, 
+#                   coords = c("Longitude", "Latitude"),
+#                   crs = 4326)  # WGS84 (standard lat/lon)
 
 
 plot(harvest_raw)
@@ -87,11 +91,11 @@ harvest_raw
 names(harvest_raw)
 
 harvest_raw %>%
-  select(`Mass Yield`, `Wet Yield`, `Dry Yield`) %>%
+  select(`MassYield`, `WetYield`, `DryYield`) %>%
   st_drop_geometry() %>%
   summary()
 
-#Looks like `Wet Yield` and  `Dry Yield`, are almost the same... use `Dry Yield`
+#Looks like WetYield   and  DryYield, are almost the same... use `DryYield`
 
 
 #############
@@ -103,32 +107,41 @@ st_crs(harvest_raw)
 # Your shapefile has WGS84 but with malformed metadata
 # Reset it to proper WGS84
 
-harvest_raw <- st_set_crs(harvest_raw, 4326)
-# Alternative: GDA2020 / MGA Zone 54 (Australian standard for the area)
-harvest_raw_mga <- st_transform(harvest_raw, 7854)
-
+# harvest_raw <- st_set_crs(harvest_raw, 4326)
+# # Alternative: GDA2020 / MGA Zone 54 (Australian standard for the area)
+# harvest_raw_mga <- st_transform(harvest_raw, 7854)
+harvest_raw_mga <- harvest_raw # no need to transform
 
 ################################################################################
 
 ## Read in data
-boundary   <- st_read(file.path(headDir, file_path_details$boundary))
-strips <-     st_read(file.path(headDir, file_path_details$trial.plan))
-strips <- st_make_valid(strips) #Checks whether a geometry is valid, or makes an invalid geometry valid
+zones <- st_read(
+  paste0(headDir,file_path_details$`location of zone shp`))
+strip <- st_read(
+  paste0(headDir,file_path_details$`trial.plan`))
 
-#data.raw <- st_read(paste0(headDir,'/7.In_Season_data/24/4.Biomass/Biomass_NDVI_Walpeup_2024_merged_data.gpkg'))
+## convert combined data into pt shape file
 
-zones <- rast(paste0(file.path(headDir, file_path_details$`location of zone tif`)))
-zones <- terra::project(zones,paste0('epsg:',crs_used),method='near')
+
+
+# Create the plot just to check location 
+ggplot() +
+  geom_sf(data = harvest_raw_mga, size = 0.1, alpha = 0.5) +
+  geom_sf(data = zones, fill = NA, color = "red", linewidth = 0.5) +
+  geom_sf(data = strip, fill = NA, color = "blue", linewidth = 0.5) 
+  
+
+
 
 
 #################################################################################
-data.raw <- harvest_raw
-strips <- st_make_valid(strips)
-strips <- strips %>%
-  mutate(treat_desc = ifelse(treat_desc == "Control (-Tillage -Lime)", "Control", treat_desc))
+# data.raw <- harvest_raw
+# strips <- st_make_valid(strips)
+# strips <- strips %>%
+#   mutate(treat_desc = ifelse(treat_desc == "Control (-Tillage -Lime)", "Control", treat_desc))
 
 
-
+###############################################################################
 
 
 ################################################################################
