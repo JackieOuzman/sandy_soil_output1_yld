@@ -16,11 +16,14 @@ library(emmeans)
 ########################            Define the directory              ##########
 ################################################################################
 
-dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
-headDir <- paste0(dir, "/work/Output-1/", site_number)
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
 
+site_number <-"2.Crystal_Brook_Brians_House" 
+site_name <-  "Crystal_Brook_Brians_House"
+
+dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
+headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 analysis.yr <- "25"
 
@@ -66,6 +69,7 @@ merged_pt_sampling <- merged_pt_sampling %>%
 ################################################################################
 ## Step 1) Define variables
 ## Define variable in data to analyse
+merged_pt_sampling %>% distinct(field_observation)
 
 #variable <- "Establishment" #
 #variable <- "Establishment CV" #
@@ -73,8 +77,8 @@ merged_pt_sampling <- merged_pt_sampling %>%
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-variable <- "Harvest index" # 
-
+#variable <- "Harvest index" # 
+variable <- "Protein"
 
 
 str(merged_pt_sampling)
@@ -82,11 +86,6 @@ str(merged_pt_sampling)
 ## Define treatment column name in strips
 treat.col.name <- "treat_desc"
 
-## Define name of control
-# unique(merged_pt_sampling$treat_desc)
-# control.name <- "Lime Control (3t)" # was "Control"
-# control.name <- "Lime Control (3t)" # was "Control"
-# str(treatment_names)
 
 control.name <- treatment_names %>% 
   filter(`True control` == "Control") %>% 
@@ -113,7 +112,14 @@ df <- merged_pt_sampling
 df <- df %>% 
   filter(field_observation == variable) %>% 
   filter(!is.na(target.variable))
-
+### The analysis code doesn't like "-" so here we are replacing with "_"
+names(df)
+new_names_temp <- df %>% 
+  distinct(treat, .keep_all = TRUE) %>% 
+  select(treat, treat_id, treat_desc)
+df <- df %>%
+  rename(treat_original = treat) %>%
+  mutate(treat = gsub("-", "_", treat_original))
 
 
 str(df)
@@ -135,13 +141,10 @@ summary_stats <- df %>%
 summary_stats
 
 
-
-
-
-#Make sure control_group is defined first
-control_group <- df %>%
-  filter(field_observation == variable) %>%
-  filter(treat == control.name)
+# #Make sure control_group is defined first
+# control_group <- df %>%
+#   filter(field_observation == variable) %>%
+#   filter(treat == control.name)
 
 
 
@@ -174,7 +177,10 @@ summary_stats.2 <- inner_join(summary_stats,sig.out, join_by(treat == treat_desc
   mutate(analysis.type = paste0(variable,"_Yr_", analysis.yr ))
 print(summary_stats.2)
 
+### If you needed to modify the treat names replacing - with _ change it back
 
+summary_stats.2 <- summary_stats.2 %>%
+  mutate(treat = gsub("_", "-", treat))
 
 
 ################################################################################
@@ -185,7 +191,7 @@ write.csv(summary_stats.2,
                  variable,'_summary_stats_strip.csv'),
           row.names = FALSE)
 
-rm(summary_stats.2, sig.out, anova, t_test_results, tukey, tukey_results)
+rm(summary_stats.2, sig.out, anova, tukey, tukey_results)
 
 
 
@@ -198,7 +204,7 @@ rm(summary_stats.2, sig.out, anova, t_test_results, tukey, tukey_results)
 ## Step 6) Compute summary statistics by zone
 
 str(df)
-df <- df %>% rename(zone=  cluster3 )
+#df <- df %>% rename(zone=  cluster3 )
 
 
 

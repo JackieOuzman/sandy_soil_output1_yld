@@ -20,9 +20,13 @@ library(readr)
 ########################            Define the directory              ##########
 ################################################################################
 
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
+
+site_number <-"2.Crystal_Brook_Brians_House" 
+site_name <-  "Crystal_Brook_Brians_House"
+
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <-"2.Crystal_Brook_Brians_House" # "1.Walpeup_MRS125"
-site_name <-  "Crystal_Brook_Brians_House"# "Walpeup_MRS125"
 
 
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -56,23 +60,23 @@ file_path_details <- readxl::read_excel(
 #Bring in the data for each field sampling event. These analysis.type are defined by Stirling
 
 #analysis.type <- "Establishment" #
-analysis.type <- "Establishment CV" #
+#analysis.type <- "Establishment CV" #
 #analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
 #analysis.type <- "Harvest index" # 
+analysis.type <- "Protein"
 
 
 
 
-field_details %>%  filter(Site == site_number)
 
 
 field_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "location of observation data") %>% 
-  filter(Site == site_number) %>% 
+  filter(Site == site_number)  %>% 
   filter(analysis_type == analysis.type )
 
 variable <- field_details$variable_clm_name

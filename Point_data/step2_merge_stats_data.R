@@ -15,10 +15,13 @@ library(emmeans)
 ################################################################################
 ########################            Define the directory              ##########
 ################################################################################
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
+
+site_number <-"2.Crystal_Brook_Brians_House" 
+site_name <-  "Crystal_Brook_Brians_House"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
