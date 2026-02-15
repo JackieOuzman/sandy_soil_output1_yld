@@ -46,7 +46,7 @@ file_path_details <- readxl::read_excel(
   filter(Site == site_number)
 ```
 
-# Walpeup MRS125
+
 ### Rainfall and Trial data
 
 ```{r list of sites, echo=FALSE}
@@ -478,13 +478,39 @@ Analyse treatment effects within each zone separately, accounting for spatial va
 
 #### Results Yield data (off header).
 
-1. Data projected and thinned to 1m spacing
-2. No cleaning or trimming; yield not adjusted for moisture
-3. Outliers removed by visual inspection
-4. Data clipped to trial area boundaries
-5. Polygon ladders generated (10m length × strip width)
-6. Yield points within each polygon averaged
-7. Averaged values used for statistical analysis
+
+There are many different ways to analyse yield monitor data. Yield data is often noisy, so thinning, cleaning, and trimming are usually recommended. Yield data is also frequently kriged to interpolate missing values and generate a map.
+
+Strip trials add complexity to this process. Long, unreplicated strips within a paddock are difficult to krige. In some trials, low or zero yield values may be real, but standard cleaning and trimming methods may remove these values. Retaining zero values add complexity to statical analysis.
+
+The workflow below represents just one approach for analysing strip trial yield data collected from a yield monitor. Further refinement and testing are needed to optimise the method.
+Current Workflow
+
+Harvest data from the yield monitor (processed in QGIS using Christina Tools, an extension of PAT):
+
+1.	Data projected.
+2.	Data thinned to 1 m spacing.
+3.	No cleaning or trimming applied.
+4.	Yield not adjusted for moisture.
+5.	Outliers removed by visual inspection.
+6.	X and Y coordinates assigned to the shapefile.
+7.	Data exported as a shapefile and CSV.
+
+Strip ladder polygons  (in QGIS using Christina Tools):
+
+8.	Strip treatments and control areas (excluding buffers) selected.
+9.	Polygon ladders generated (10m length × strip width).
+10.	Polygon, line, and point layers exported as shapefiles.
+
+Analysis in R:
+
+11.	Target yield column selected from yield dataset.
+12.	Yield data joined and clipped to the ladder polygons.
+13.	Yield data joined to management zones.
+14.	Yield values within each ladder polygon averaged to create one yield value per ladder.
+15.	Centroid of each polygon ladder created
+16.	These averaged values are used for further analysis and plotting.
+
 
 
 
@@ -492,14 +518,13 @@ Analyse treatment effects within each zone separately, accounting for spatial va
 ```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
  
 
-# knitr::include_graphics(
-#   c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
-#     paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"),
-#   paste0(site_name, "_images/plots/", "yld data with 2 harvesters", ".png"))
-# )
+knitr::include_graphics(
+  c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
+    paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
+)
 
 # ## NB Results are here   
-# ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\2#5\###Processing_Jackie"
+# ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Harvest\
 # ## NB Analysis script is here
 # #"\\pentagon-gw\C$\Users\ouz001\working_from_home_post_Sep2022\sandy_soil_output1_yld\Yield_#Mointor_data"
 # 
