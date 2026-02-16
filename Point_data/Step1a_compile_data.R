@@ -20,11 +20,11 @@ library(readr)
 ########################            Define the directory              ##########
 ################################################################################
 
-# site_number <- "1.Walpeup_MRS125"
-# site_name <- "Walpeup_MRS125"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
 
-site_number <-"2.Crystal_Brook_Brians_House" 
-site_name <-  "Crystal_Brook_Brians_House"
+# site_number <-"2.Crystal_Brook_Brians_House" 
+# site_name <-  "Crystal_Brook_Brians_House"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 
@@ -65,8 +65,8 @@ file_path_details <- readxl::read_excel(
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
-#analysis.type <- "Harvest index" # 
-analysis.type <- "Protein"
+analysis.type <- "Harvest index" # 
+#analysis.type <- "Protein"
 
 
 

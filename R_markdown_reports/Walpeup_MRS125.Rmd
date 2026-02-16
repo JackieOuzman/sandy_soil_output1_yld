@@ -416,7 +416,7 @@ DT::datatable(point_table,
  
 
 knitr::include_graphics(paste0(site_name, "_images/location of collected samples.png"))
-
+#"H:\Output-1\1.Walpeup_MRS125\4.Sampling\2.InSeason\25\location of collected samples.png"
 
 ```
 

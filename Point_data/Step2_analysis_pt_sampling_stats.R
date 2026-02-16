@@ -16,11 +16,11 @@ library(emmeans)
 ########################            Define the directory              ##########
 ################################################################################
 
-# site_number <- "1.Walpeup_MRS125"
-# site_name <- "Walpeup_MRS125"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
 
-site_number <-"2.Crystal_Brook_Brians_House" 
-site_name <-  "Crystal_Brook_Brians_House"
+# site_number <-"2.Crystal_Brook_Brians_House" 
+# site_name <-  "Crystal_Brook_Brians_House"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -77,8 +77,8 @@ merged_pt_sampling %>% distinct(field_observation)
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-#variable <- "Harvest index" # 
-variable <- "Protein"
+variable <- "Harvest index" # 
+#variable <- "Protein"
 
 
 str(merged_pt_sampling)
@@ -206,6 +206,14 @@ rm(summary_stats.2, sig.out, anova, tukey, tukey_results)
 str(df)
 #df <- df %>% rename(zone=  cluster3 )
 
+### The analysis code doesn't like "-" so here we are replacing with "_"
+# names(df)
+# new_names_temp <- df %>% 
+#   distinct(treat, .keep_all = TRUE) %>% 
+#   select(treat, treat_id, treat_desc)
+# df <- df %>%
+#   rename(treat_original = treat) %>%
+#   mutate(treat = gsub("-", "_", treat_original))
 
 
 
@@ -294,6 +302,11 @@ summary_stats.2 <- summary_stats_zone %>%
   inner_join(sig_letters_all, by = c("zone", "treat"))
 
 print(summary_stats.2)
+
+### If you needed to modify the treat names replacing - with _ change it back
+
+# summary_stats.2 <- summary_stats.2 %>%
+#   mutate(treat = gsub("_", "-", treat))
 
 write.csv(summary_stats.2, 
           paste0(headDir,'/10.Analysis/',analysis.yr,'/Processing_Jackie/Stats_pt_sampling/',

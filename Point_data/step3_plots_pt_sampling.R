@@ -21,11 +21,11 @@ library(readxl)
 ########################            Define the directory              ##########
 ################################################################################
 
-# site_number <- "1.Walpeup_MRS125"
-# site_name <- "Walpeup_MRS125"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
 
-site_number <-"2.Crystal_Brook_Brians_House" 
-site_name <-  "Crystal_Brook_Brians_House"
+# site_number <-"2.Crystal_Brook_Brians_House" 
+# site_name <-  "Crystal_Brook_Brians_House"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -73,7 +73,7 @@ Pt_sampling_details <- Pt_sampling_details %>%
          "Date_collected" ,
          "varibale_units") %>% 
   mutate(variable_name = paste0(variable_name, "_Yr_", analysis.yr))
-
+Pt_sampling_details
 ################################################################################
 ### List of files 
 strips_merged_stats <- list.files(path = headDir_analysis_folder, 
@@ -115,8 +115,8 @@ strips_merged_stats_df <- left_join(strips_merged_stats_df,
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-# variable <- "Harvest index" # 
- variable <- "Protein"
+variable <- "Harvest index" # 
+#variable <- "Protein"
 
 
 # Create the bar plot from the strip analysis data
@@ -179,3 +179,4 @@ headDir_analysis_folder
 ggsave(paste0(headDir_analysis_folder,"plots/",
               variable,
               '_strip_mean_ANOVA_plot.png'), site.bar.plot)
+

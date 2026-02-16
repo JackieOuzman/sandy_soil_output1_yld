@@ -4,11 +4,11 @@ library(readr)
 library(stringr)
 
 
-# site_number <- "1.Walpeup_MRS125"
-# site_name <- "Walpeup_MRS125"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
 
-site_number <-"2.Crystal_Brook_Brians_House" 
-site_name <-  "Crystal_Brook_Brians_House"
+# site_number <-"2.Crystal_Brook_Brians_House" 
+# site_name <-  "Crystal_Brook_Brians_House"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -80,10 +80,10 @@ ggplot() +
 
 # points are located in zone and strips
 names(zones)
-zones <- zones %>% rename("zone" = "cluster"  ,
+zones <- zones %>% rename("zone" = "gridcode"  ,
                           "zone_ha" = "POLY_AREA")
 names(strip)
-strip <- strip %>% rename("strip_ha" = "POLY_AREA") %>% dplyr::select(-"rep" )
+#strip <- strip %>% rename("strip_ha" = "POLY_AREA") %>% dplyr::select(-"rep" )
 
 # Spatial join to find which zone polygon each point falls into
 dat_with_zone <- st_join(dat_combined_sf, zones)
@@ -118,7 +118,7 @@ write.csv(dat_with_both_csv,
           row.names = FALSE)
 
 
-write.csv(dat_combined_6, 
+write.csv(dat_combined, 
           paste0(headDir,"/10.Analysis/25/Processing_Jackie/merged_pt_sampling/", 
                  "plant_sample_merged_2025_no_zone_strips.csv"),
           row.names = FALSE)
