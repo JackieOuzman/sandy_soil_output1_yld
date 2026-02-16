@@ -1,10 +1,10 @@
 ---
 title: "Paddock Report"
-Site: "Wynarka"
-Paddock: "Mervs West"
 author: "Jackie Ouzman"
 date: "2026-02-08"
 output: html_document
+Paddock: Mervs West
+Site: Wynarka
 ---
 
 ```{r setup, include=FALSE}
@@ -528,10 +528,10 @@ Analysis in R:
 ```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
  
 
-# knitr::include_graphics(
-#   c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
-#     paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
-# )
+knitr::include_graphics(
+  c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
+    paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
+)
 
 # ## NB Results are here   
 # ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Harvest\
