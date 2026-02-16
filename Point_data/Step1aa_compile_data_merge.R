@@ -4,11 +4,14 @@ library(readr)
 library(stringr)
 
 
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
+
+site_number <- "3.Wynarka_Mervs_West"
+site_name <- "Wynarka_Mervs_West"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -43,7 +46,7 @@ file_df
 
 
 
-dat_combined <- csv_files[1:7] %>%
+dat_combined <- csv_files[1:8] %>%
   lapply(function(file) {
     read_csv(file, col_types = cols(date_field_observation = col_character())) %>%
       mutate(source_file = basename(file))
@@ -80,10 +83,11 @@ ggplot() +
 
 # points are located in zone and strips
 names(zones)
-zones <- zones %>% rename("zone" = "gridcode"  ,
+zones <- zones %>% rename("zone" = "fcl_mdl"  ,
+                          #"zone" = "gridcode"  ,
                           "zone_ha" = "POLY_AREA")
 names(strip)
-#strip <- strip %>% rename("strip_ha" = "POLY_AREA") %>% dplyr::select(-"rep" )
+strip <- strip %>% rename("strip_ha" = "POLY_AREA") %>% dplyr::select(-"rep" )
 
 # Spatial join to find which zone polygon each point falls into
 dat_with_zone <- st_join(dat_combined_sf, zones)

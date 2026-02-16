@@ -21,11 +21,14 @@ library(readxl)
 ########################            Define the directory              ##########
 ################################################################################
 
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
+
+site_number <- "3.Wynarka_Mervs_West"
+site_name <- "Wynarka_Mervs_West"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -114,9 +117,9 @@ strips_merged_stats_df <- left_join(strips_merged_stats_df,
 #variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
-variable <- "Thousand grain weight" # 
+#variable <- "Thousand grain weight" # 
 #variable <- "Harvest index" # 
-#variable <- "Protein"
+variable <- "Protein"
 
 
 # Create the bar plot from the strip analysis data
