@@ -434,7 +434,7 @@ The error bars on the plot at the Q1 and Q3 values.
 knitr::include_graphics(
   c(
     paste0(site_name, "_images/plots/", "Establishment", "_strip_mean_ANOVA_plot.png"),
-    paste0(site_name, "_images/plots/", "Establishment CV", "_strip_mean_ANOVA_plot.png"),
+    #paste0(site_name, "_images/plots/", "Establishment CV", "_strip_mean_ANOVA_plot.png"),
     paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
     
     paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_ANOVA_plot.png"),
@@ -462,14 +462,41 @@ Anlaysis performed but sample size is very low and results not plotted
 
 
 #### Results Yield data (off header).
+There are many different ways to analyse yield monitor data. Yield data is often noisy, so thinning, cleaning, and trimming are usually recommended. Yield data is also frequently kriged to interpolate missing values and generate a map.
 
-1. Data projected and thinned to 1m spacing
-2. No cleaning or trimming; yield not adjusted for moisture
-3. Outliers removed by visual inspection
-4. Data clipped to trial area boundaries
-5. Polygon ladders generated (10m length × strip width)
-6. Yield points within each polygon averaged
-7. Averaged values used for statistical analysis
+Strip trials add complexity to this process. Long, unreplicated strips within a paddock are difficult to krige. In some trials, low or zero yield values may be real, but standard cleaning and trimming methods may remove these values. Retaining zero values add complexity to statical analysis.
+
+The workflow below represents just one approach for analysing strip trial yield data collected from a yield monitor. Further refinement and testing are needed to optimise the method.
+Current Workflow
+
+Harvest data from the yield monitor (processed in QGIS using Christina Tools, an extension of PAT):
+
+1.	Data projected.
+2.	Data thinned to 1m spacing.
+3.	No cleaning or trimming applied.
+4.	Yield not adjusted for moisture.
+5.	Outliers removed by visual inspection.
+6.	X and Y coordinates assigned to the shapefile.
+7.	Data exported as a shapefile and CSV.
+
+Strip ladder polygons  (in QGIS using Christina Tools):
+
+8.	Strip treatments and control areas (excluding buffers) selected.
+9.	Polygon ladders generated (10m length × strip width).
+10.	Polygon, line, and point layers exported as shapefiles.
+
+Analysis in R:
+
+11.	Target yield column selected from yield dataset.
+12.	Yield data joined and clipped to the ladder polygons.
+13.	Yield data joined to management zones.
+14.	Yield values within each ladder polygon averaged to create one yield value per ladder.
+15.	Centroid of each polygon ladder created
+16.	These averaged values are used for further analysis and plotting.
+
+
+
+
 
 Note 2 headers operated at Walpeup MRS125, found it!
 

@@ -114,8 +114,8 @@ strips_merged_stats_df <- left_join(strips_merged_stats_df,
 #variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
-#variable <- "Thousand grain weight" # 
-variable <- "Harvest index" # 
+variable <- "Thousand grain weight" # 
+#variable <- "Harvest index" # 
 #variable <- "Protein"
 
 
