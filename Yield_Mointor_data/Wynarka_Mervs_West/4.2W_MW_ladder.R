@@ -174,12 +174,12 @@ yld_data_with_ladders_clus <- yld_data_with_ladders_clus %>%
 
 str(yld_data_with_ladders_clus)
 #
-count(yld_data_with_ladders_clus %>% dplyr::distinct(treat_Ladder_PointID))
+count(yld_data_with_ladders_clus %>% dplyr::distinct(treat_Ladder_PointID)
 
 yld_data_with_summary <- yld_data_with_ladders_clus %>% 
   group_by(treat_Ladder_PointID, treat, treat_id, treat_desc, Ladder_PointID) %>% 
-  summarise(mean_yld = mean(VRYIELDMAS, na.rm = TRUE),
-            #mean_yld = mean(DryYield, na.rm = TRUE),
+  summarise(#mean_yld = mean(VRYIELDMAS, na.rm = TRUE),
+            mean_yld = mean(DryYield, na.rm = TRUE),
             mean_zone = round(mean(zone, na.rm = TRUE)),
             n_yld_pt = n(),
             .groups = "drop")  # This automatically keeps geometry for sf objects
