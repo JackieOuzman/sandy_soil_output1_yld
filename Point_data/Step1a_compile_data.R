@@ -69,6 +69,7 @@ file_path_details <- readxl::read_excel(
 #analysis.type <- "Establishment" #
 #analysis.type <- "Establishment CV" #
 #analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 

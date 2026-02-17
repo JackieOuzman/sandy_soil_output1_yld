@@ -27,8 +27,11 @@ library(readxl)
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
+
+site_number <- "4.Wharminda"
+site_name <- "Wharminda"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -59,7 +62,7 @@ strip_names_details <- readxl::read_excel(
 
 names(strip_names_details)
 strip_names_details <- strip_names_details %>% 
-  select("treat" ,
+  dplyr::select("treat" ,
          "Shorthand names" ,
          "Treatment name",
          "Order_in_paddock" ,
@@ -72,7 +75,7 @@ Pt_sampling_details <- readxl::read_excel(
 
 names(Pt_sampling_details)
 Pt_sampling_details <- Pt_sampling_details %>% 
-  select("variable_name" ,
+  dplyr::select("variable_name" ,
          "Date_collected" ,
          "varibale_units") %>% 
   mutate(variable_name = paste0(variable_name, "_Yr_", analysis.yr))
@@ -114,12 +117,12 @@ strips_merged_stats_df <- left_join(strips_merged_stats_df,
 
 #variable <- "Establishment" #
 #variable <- "Establishment CV" #
-#variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
 #variable <- "Harvest index" # 
-variable <- "Protein"
+#variable <- "Protein"
 
 
 # Create the bar plot from the strip analysis data

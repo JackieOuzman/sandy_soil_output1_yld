@@ -22,8 +22,12 @@ library(emmeans)
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
+
+site_number <- "4.Wharminda"
+site_name <- "Wharminda"
+
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -76,12 +80,12 @@ merged_pt_sampling %>% distinct(field_observation)
 
 #variable <- "Establishment" #
 #variable <- "Establishment CV" #
-#variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
 #variable <- "Harvest index" # 
-variable <- "Protein"
+#variable <- "Protein"
 
 
 str(merged_pt_sampling)
@@ -119,7 +123,7 @@ df <- df %>%
 names(df)
 new_names_temp <- df %>% 
   distinct(treat, .keep_all = TRUE) %>% 
-  select(treat, treat_id, treat_desc)
+  dplyr::select(treat, treat_id, treat_desc)
 df <- df %>%
   rename(treat_original = treat) %>%
   mutate(treat = gsub("-", "_", treat_original))

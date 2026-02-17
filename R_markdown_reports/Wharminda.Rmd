@@ -250,10 +250,10 @@ No images available on shared drive.
 ```{r map of managmnet zone, echo=FALSE, warning=FALSE}
  
 
-knitr::include_graphics(paste0(site_name, "_images/Zone Jackie.png"))
+knitr::include_graphics(paste0(site_name, "_images/zone jackie.png"))
 
 # knitr::include_graphics(c(
-#   paste0(headDir, "/3.Covariates/6.Clusters_Zones/FINAL/Zone Jackie.png")
+#   paste0(headDir, "/3.Covariates/6.Clusters_Zones/FINAL/zone jackie.png")
 # ))
 ```
 
@@ -303,9 +303,9 @@ Additional information on strips:
 ```{r map of strip , echo=FALSE, warning=FALSE}
  
 
-knitr::include_graphics(paste0(site_name, "_images/Strips Jackie.png"))
+knitr::include_graphics(paste0(site_name, "_images/strips jackie.png"))
 
-
+#"H:\Output-1\4.Wharminda\5.Trial_Plan\FINAL-Trial-Plan\GIS\strips jackie.png"
 ```
 
 
@@ -368,9 +368,9 @@ summary_table <- joined %>%
   mutate(Total = rowSums(across(starts_with("Zone")), na.rm = TRUE))
 
 
-## Note at this site there was no strips with zone 3
-summary_table <- summary_table %>%
-  add_column(`Zone 3` = NA, .after = "Zone 2")
+## Note at this site there was no strips with zone 3. This is for CB HO
+# summary_table <- summary_table %>%
+#  add_column(`Zone 3` = NA, .after = "Zone 2")
 
 ```
 
@@ -428,7 +428,7 @@ DT::datatable(point_table,
 
 knitr::include_graphics(paste0(site_name, "_images/sampling location jackie.png"))
 
-#"H:/Output-1/3.Wynarka_Mervs_West/7.In_Season_data/25/sampling location jackie.png"
+#"H:\Output-1\4.Wharminda\7.In_Season_data\25\sampling locations jackie.png"
 ```
 
 #### Results Point sampling
@@ -438,7 +438,8 @@ knitr::include_graphics(paste0(site_name, "_images/sampling location jackie.png"
 One-way ANOVA followed by Tukey's HSD post-hoc test at 95% confidence (p < 0.05), where treatments sharing the same letter are not significantly different from each other, while treatments with different letters have statistically significant differences in their means.
 The error bars on the plot at the Q1 and Q3 values.
 
-Note: CB HO - still waiting for biomass at flowering (13/2/2025)
+Note:
+At Wharminda; I can't locate the biomass at maturity or any of the other maturity results. 
 
 ```{r Stats pt sampling results strips1, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
  
@@ -447,13 +448,13 @@ knitr::include_graphics(
   c(
     paste0(site_name, "_images/plots/", "Establishment", "_strip_mean_ANOVA_plot.png"),
     #paste0(site_name, "_images/plots/", "Establishment CV", "_strip_mean_ANOVA_plot.png"),
-    #paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
+    paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
     
-    paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_ANOVA_plot.png"),
-    paste0(site_name, "_images/plots/", "Grain yield", "_strip_mean_ANOVA_plot.png"),
-    paste0(site_name, "_images/plots/", "Protein", "_strip_mean_ANOVA_plot.png"),
-    paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_ANOVA_plot.png"),
-    paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_ANOVA_plot.png")
+    # paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_ANOVA_plot.png"),
+    # paste0(site_name, "_images/plots/", "Grain yield", "_strip_mean_ANOVA_plot.png"),
+    # paste0(site_name, "_images/plots/", "Protein", "_strip_mean_ANOVA_plot.png"),
+    # paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_ANOVA_plot.png"),
+    # paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_ANOVA_plot.png")
     
   )
 )

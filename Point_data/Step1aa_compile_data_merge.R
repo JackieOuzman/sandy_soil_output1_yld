@@ -10,8 +10,11 @@ library(stringr)
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
+
+site_number <- "4.Wharminda"
+site_name <- "Wharminda"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -46,7 +49,8 @@ file_df
 
 
 
-dat_combined <- csv_files[1:8] %>%
+  #dat_combined <- csv_files[1:8] %>%
+  dat_combined <- csv_files[1:3] %>%
   lapply(function(file) {
     read_csv(file, col_types = cols(date_field_observation = col_character())) %>%
       mutate(source_file = basename(file))
