@@ -1,0 +1,544 @@
+---
+title: "Paddock Report"
+author: "Jackie Ouzman"
+date: "2026-02-08"
+output: html_document
+Paddock: TBC
+Site: Wharminda
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load_libary, include=FALSE}
+library(ggplot2)
+library(readxl)
+library(tidyverse)
+library(lubridate)
+library(data.table)
+library(stringr)
+library(sf)
+```
+
+
+
+```{r site, include=FALSE}
+site_report <- "Wharminda"
+
+dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
+site_number <- "4.Wharminda"
+site_name <- "Wharminda"
+headDir <- paste0(dir, "/work/Output-1/", site_number)
+
+
+
+analysis.yr <- "25"
+
+metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
+#metadata_file_name <- "names of treatments per site 2025 metadata and other info TEMP.xlsx"
+metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
+
+file_path_details <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "location of file and details") %>% 
+  filter(Site == site_number)
+```
+
+
+### Rainfall and Trial data
+
+```{r list of sites, echo=FALSE}
+list_of_sites <- data.frame(
+    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello", "Crystal Brook", "Wynarka"), ### add more here when you have the info
+    Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000", "21016", "25006"),
+    Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85",   "-33.35", "-35.09"),
+    Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78", "138.21", "139.90"),
+    State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC", "SA", "SA")
+    )
+
+
+
+
+
+# Create a caption for the sites table
+caption_text <- "<b style='font-size: 18px;'>Site Information</b>"
+
+# Display the filtered sites table
+DT::datatable(list_of_sites %>% filter(Name == site_report),
+              options = list(
+                dom = 't',
+                ordering = FALSE,
+                pageLength = 10
+              ),
+              rownames = FALSE,
+              caption = htmltools::HTML(caption_text),
+              escape = FALSE)
+ 
+``` 
+
+
+
+```{r imprort daily met season type, echo=FALSE}
+
+file_path_input_data<-file.path("H:","Output-1", "0.Site-info", "Climate", "Decile_tables")
+
+met_station_number <- list_of_sites %>% 
+  filter(Name == site_report) %>% 
+  pull(Number)  # Use pull() to get the value, not a data frame
+
+# List all CSV files
+list_of_files <- list.files(path = file_path_input_data, pattern = ".csv")
+
+# Find the file containing the met station number
+file_to_read <- list_of_files[grep(paste0("Daily_met_file_season types_", met_station_number), list_of_files)]
+
+file_to_read2 <- list_of_files[grep(paste0("Year_with_Deciles_", met_station_number), list_of_files)]
+
+# Read the file
+decile_data <- read.csv(file.path(file_path_input_data, file_to_read))
+# Read the file
+years_with_decile <- read.csv(file.path(file_path_input_data, file_to_read2))
+
+
+```
+
+
+
+
+
+
+```{r rain stats, echo=FALSE}
+# Calculate rainfall statistics
+annual_rainfall <- decile_data %>%
+  group_by(year) %>%
+  summarise(annual_rain = sum(Rain, na.rm = TRUE)) %>%
+  summarise(avg_annual_rainfall = mean(annual_rain, na.rm = TRUE)) %>%
+  pull(avg_annual_rainfall)
+
+summer_rainfall <- decile_data %>%
+  filter(season_summer == "summer") %>%
+  group_by(year) %>%
+  summarise(summer_rain = sum(Rain, na.rm = TRUE)) %>%
+  summarise(avg_summer_rainfall = mean(summer_rain, na.rm = TRUE)) %>%
+  pull(avg_summer_rainfall)
+
+gs_rainfall <- decile_data %>%
+  filter(season_GS == "gs") %>%
+  group_by(year) %>%
+  summarise(gs_rain = sum(Rain, na.rm = TRUE)) %>%
+  summarise(avg_gs_rainfall = mean(gs_rain, na.rm = TRUE)) %>%
+  pull(avg_gs_rainfall)
+
+# Create a summary table
+rainfall_summary <- data.frame(
+  `Rainfall Metric` = c("Met Station Number",
+                        "Station Name",
+                        "Average Annual Rainfall (mm)", 
+                        "Average Summer Rainfall (1 Nov - 1 Apr) (mm)", 
+                        "Average GS Rainfall (1 Apr - 15 Oct) (mm)"),
+  Value = c(unique(decile_data$Number),
+            unique(decile_data$Name),
+            round(annual_rainfall, 1),
+            round(summer_rainfall, 1),
+            round(gs_rainfall, 1)),
+  check.names = FALSE
+)
+
+
+# Display with DT::datatable
+caption_text <- "<b style='font-size: 18px;'>Rainfall Summary Statistics</b>"
+
+DT::datatable(rainfall_summary,
+              options = list(
+                dom = 't',
+                ordering = FALSE,
+                pageLength = 5
+              ),
+              rownames = FALSE,
+              colnames = c("", ""),  # Empty column names
+              caption = htmltools::HTML(caption_text))
+```
+
+
+
+```{r metadata , echo=FALSE}
+Sowing_metadata <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "seasons") %>% 
+  filter(Site == site_number) %>% 
+  filter(Site == site_number )
+
+Sowing_metadata <- left_join(Sowing_metadata, years_with_decile, join_by(Year == year))
+
+
+# Select and format relevant columns in the correct order
+sowing_table <- Sowing_metadata %>%
+  select(Year, Crop, Variety, `Sowing date`, `Harvest date`, 
+         gs_sum_rain, summer_sum_rain, gs_decile, summer_decile) %>%
+  mutate(
+    `Sowing date` = format(`Sowing date`, "%d %b %Y"),
+    `Harvest date` = as.character(`Harvest date`)  # Convert logical NA to character
+  ) %>%
+  rename(
+    `GS Rainfall (mm)` = gs_sum_rain,
+    `Summer Rainfall (mm)` = summer_sum_rain,
+    `GS Decile` = gs_decile,
+    `Summer Decile` = summer_decile
+  )
+
+# Create caption from unique values
+gs_period <- unique(Sowing_metadata$GS_period)[1]
+summer_period <- unique(Sowing_metadata$summer_period)[1]
+years_included <- unique(Sowing_metadata$Years_included)[1]
+
+caption_text <- paste0("Crop Sowing and Rainfall Summary<br>",
+                       "GS Period: ", gs_period, " | ",
+                       "Summer Period: ", summer_period, " | ",
+                       "Years Included: ", years_included)
+
+# Create caption from unique values
+gs_period <- unique(Sowing_metadata$GS_period)[1]
+summer_period <- unique(Sowing_metadata$summer_period)[1]
+years_included <- unique(Sowing_metadata$Years_included)[1]
+
+caption_text <- paste0("<b style='font-size: 18px;'>Trial Years Sowing and Rainfall Summary</b><br>",
+                       "GS Period: ", gs_period, " | ",
+                       "Summer Period: ", summer_period, " | ",
+                       "Years Included: ", years_included)
+
+# Display with DT::datatable
+DT::datatable(sowing_table,
+              options = list(
+                dom = 't',
+                ordering = FALSE,
+                pageLength = 10
+              ),
+              rownames = FALSE,
+              caption = htmltools::HTML(caption_text),
+              escape = FALSE)
+```
+
+### Soil constraints at site
+
+Need some information here….
+
+
+### Management zones:
+
+#### Layers used to define management zone
+No images available on shared drive.
+(Please confirm this)
+
+```{r input for managmnet zone, echo=FALSE, warning=FALSE}
+ 
+
+#knitr::include_graphics(paste0(site_name, "_images/covs_1_16.png"))
+#knitr::include_graphics(paste0(site_name, "_images/covs_17_32.png"))
+
+
+# knitr::include_graphics(c(
+#   paste0(headDir, "/3.Covariates/7.Plots/No Images.png"),
+#   paste0(headDir, "/3.Covariates/7.Plots/No Images.png")
+# ))
+```
+
+#### Map of management zone.
+
+
+```{r map of managmnet zone, echo=FALSE, warning=FALSE}
+ 
+
+knitr::include_graphics(paste0(site_name, "_images/Zone Jackie.png"))
+
+# knitr::include_graphics(c(
+#   paste0(headDir, "/3.Covariates/6.Clusters_Zones/FINAL/Zone Jackie.png")
+# ))
+```
+
+
+```{r stats managmnet zone, message=FALSE, warning=FALSE, include=FALSE}
+zones <- st_read(
+  paste0(headDir,file_path_details$`location of zone shp`))
+
+
+zones_table <- zones %>%
+  st_drop_geometry() %>%  # Remove geometry column
+  mutate(
+    #Zone = as.character(gridcode), #
+    #Zone = as.character(cluster), #
+    Zone = as.character(fcl_mdl), #
+    Area_ha = round(POLY_AREA, 0),
+    Percent = round(POLY_AREA / sum(POLY_AREA) * 100, 1)
+  ) %>%
+  select(Zone, Area_ha, Percent) %>%
+  bind_rows(
+    data.frame(
+      Zone = "Total",
+      Area_ha = sum(.$Area_ha),
+      Percent = 100.0  # Changed from Percen to Percent and set to 100
+    )
+  )
+
+```
+
+```{r stats managmnet zone table, echo=FALSE, message=FALSE, warning=FALSE}
+# Display as DT table
+DT::datatable(zones_table, 
+          colnames = c('Zone', 'Area (ha)', 'Percentage (%)'),
+          rownames = FALSE,
+          options = list(
+            dom = 't',
+            ordering = FALSE
+          ))
+
+```
+
+#### Details strips.
+
+Date of amelioration:
+Additional information on strips:
+
+```{r map of strip , echo=FALSE, warning=FALSE}
+ 
+
+knitr::include_graphics(paste0(site_name, "_images/Strips Jackie.png"))
+
+
+```
+
+
+```{r stats strips, message=FALSE, warning=FALSE, include=FALSE}
+zones <- st_read(
+  paste0(headDir,file_path_details$`location of zone shp`))
+strip <- st_read(
+  paste0(headDir,file_path_details$`trial.plan`))
+
+# Calculate dimensions for each polygon
+strip <- strip %>%
+  rowwise() %>%
+  mutate(
+    bb = list(st_bbox(geometry)),
+    x_dist = bb$xmax - bb$xmin,
+    y_dist = bb$ymax - bb$ymin,
+    Length_m = round(max(x_dist, y_dist), 0),
+    Width_m = round(min(x_dist, y_dist), 0),
+    Area_ha = round(as.numeric(st_area(geometry)) / 10000, 2)
+  ) %>%
+  ungroup() %>%
+  select(-bb, -x_dist, -y_dist)
+
+strip_dims <- strip %>%
+  st_drop_geometry() %>%
+  filter(treat_desc != "Buffer") %>%
+  select(Length_m, Width_m) %>%
+  slice(1)  # Get first row (they're all the same)
+strip_length <- strip_dims$Length_m
+strip_width <- strip_dims$Width_m
+
+```
+
+
+
+```{r stats strips with zone, message=FALSE, warning=FALSE, include=FALSE}
+
+# Join - attributes from zones added to strip based on overlap
+joined <- st_intersection(strip, zones)
+
+# Remove old area columns
+joined <- joined %>% select(-POLY_AREA, -Area_ha)
+
+# Recalculate area for the NEW intersected polygons
+joined <- joined %>%
+  mutate(Area_ha = round(as.numeric(st_area(geometry)) / 10000, 2))
+
+
+
+# Create summary table
+summary_table <- joined %>%
+  rename(Zone = fcl_mdl) %>% 
+  st_drop_geometry() %>%
+  #filter(treat_desc != "Outside Control" & treat_desc != "Buffer") %>%
+  select(treat_desc, Zone, Area_ha) %>%
+  mutate(Area_ha = round(Area_ha, 2)) %>%
+  pivot_wider(names_from = Zone, 
+              values_from = Area_ha,
+              names_prefix = "Zone ") %>%
+  mutate(Total = rowSums(across(starts_with("Zone")), na.rm = TRUE))
+
+
+## Note at this site there was no strips with zone 3
+summary_table <- summary_table %>%
+  add_column(`Zone 3` = NA, .after = "Zone 2")
+
+```
+
+
+
+```{r stats strips with zones, echo=FALSE, message=FALSE, warning=FALSE}
+# Create caption with strip dimensions
+caption <- paste0("Strip dimensions: ", strip_length, " m × ", strip_width, " m")
+
+# Display as DT table with caption
+DT::datatable(summary_table, 
+              caption = caption,
+              colnames = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4','Total (ha)'),
+              rownames = FALSE,
+              options = list(
+                dom = 't',
+                ordering = FALSE
+              ))
+
+```
+
+#### Details Point sampling
+
+```{r point sampling, message=FALSE, warning=FALSE, include=FALSE}
+Point_sampling <- readxl::read_excel(
+  paste0(metadata_path, metadata_file_name),
+  sheet = "location of observation data") %>% 
+  filter(Site == site_number) %>% 
+  select("Site", "analysis_type", "Date_collected") %>%
+  mutate(Date_collected = as.Date(as.numeric(Date_collected), origin = "1899-12-30"))
+
+#names(Point_sampling)
+point_table <- Point_sampling %>%
+  select(analysis_type, Date_collected)
+```
+
+```{r point sampling table, echo=FALSE, message=FALSE, warning=FALSE}
+# Create caption with site number
+caption <- paste0("Point Sampling - Site: ", Point_sampling$Site[1])
+
+# Display as DT table
+DT::datatable(point_table,
+              caption = caption,
+              colnames = c('Analysis Type', 'Date Collected'),
+              rownames = FALSE,
+              options = list(
+                dom = 't',
+                ordering = FALSE
+              ))
+
+```
+
+```{r map of sampling location 2025 , echo=FALSE, warning=FALSE}
+ 
+
+knitr::include_graphics(paste0(site_name, "_images/sampling location jackie.png"))
+
+#"H:/Output-1/3.Wynarka_Mervs_West/7.In_Season_data/25/sampling location jackie.png"
+```
+
+#### Results Point sampling
+
+##### Strip 
+
+One-way ANOVA followed by Tukey's HSD post-hoc test at 95% confidence (p < 0.05), where treatments sharing the same letter are not significantly different from each other, while treatments with different letters have statistically significant differences in their means.
+The error bars on the plot at the Q1 and Q3 values.
+
+Note: CB HO - still waiting for biomass at flowering (13/2/2025)
+
+```{r Stats pt sampling results strips1, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
+ 
+
+knitr::include_graphics(
+  c(
+    paste0(site_name, "_images/plots/", "Establishment", "_strip_mean_ANOVA_plot.png"),
+    #paste0(site_name, "_images/plots/", "Establishment CV", "_strip_mean_ANOVA_plot.png"),
+    #paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
+    
+    paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_ANOVA_plot.png"),
+    paste0(site_name, "_images/plots/", "Grain yield", "_strip_mean_ANOVA_plot.png"),
+    paste0(site_name, "_images/plots/", "Protein", "_strip_mean_ANOVA_plot.png"),
+    paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_ANOVA_plot.png"),
+    paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_ANOVA_plot.png")
+    
+  )
+)
+
+## NB Results are here   
+## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Processing_J#ackie"
+## NB Analysis script is here
+#"\\pentagon-gw\C$\Users\ouz001\working_from_home_post_Sep2022\sandy_soil_output1_yld\Point_da#ta"
+
+# I have copied the plots over to the local drive so R markdown can access them.
+```
+
+
+
+
+##### Strip by zone
+
+Anlaysis performed but sample size is very low and results not plotted.
+
+The code is running the following:
+
+ANOVA and post-hoc tests separately for each zone step-by-step.
+
+For each treatment in the zone column, it:
+1.	Runs an ANOVA to test if treatments differ significantly
+2.	Performs Tukey's HSD post-hoc test to identify which treatment pairs differ
+3.	Generates significance letters (a, b, c, etc.) for visualizing results
+
+Analyse treatment effects within each zone separately, accounting for spatial variation. Useful when different zones might respond differently to treatments.
+
+
+
+#### Results Yield data (off header).
+
+
+There are many different ways to analyse yield monitor data. Yield data is often noisy, so thinning, cleaning, and trimming are usually recommended. Yield data is also frequently kriged to interpolate missing values and generate a map.
+
+Strip trials add complexity to this process. Long, unreplicated strips within a paddock are difficult to krige. In some trials, low or zero yield values may be real, but standard cleaning and trimming methods may remove these values. Retaining zero values add complexity to statical analysis.
+
+The workflow below represents just one approach for analysing strip trial yield data collected from a yield monitor. Further refinement and testing are needed to optimise the method.
+Current Workflow
+
+Harvest data from the yield monitor (processed in QGIS using Christina Tools, an extension of PAT):
+
+1.	Data projected.
+2.	Data thinned to 1 m spacing.
+3.	No cleaning or trimming applied.
+4.	Yield not adjusted for moisture.
+5.	Outliers removed by visual inspection.
+6.	X and Y coordinates assigned to the shapefile.
+7.	Data exported as a shapefile and CSV.
+
+Strip ladder polygons  (in QGIS using Christina Tools):
+
+8.	Strip treatments and control areas (excluding buffers) selected.
+9.	Polygon ladders generated (10m length × strip width).
+10.	Polygon, line, and point layers exported as shapefiles.
+
+Analysis in R:
+
+11.	Target yield column selected from yield dataset.
+12.	Yield data joined and clipped to the ladder polygons.
+13.	Yield data joined to management zones.
+14.	Yield values within each ladder polygon averaged to create one yield value per ladder.
+15.	Centroid of each polygon ladder created
+16.	These averaged values are used for further analysis and plotting.
+
+
+
+
+
+```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
+ 
+
+knitr::include_graphics(
+  c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
+    paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
+)
+
+# ## NB Results are here   
+# ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Harvest\
+# ## NB Analysis script is here
+# #"\\pentagon-gw\C$\Users\ouz001\working_from_home_post_Sep2022\sandy_soil_output1_yld\Yield_#Mointor_data"
+# 
+# # I have copied the plots over to the local drive so R markdown can access them.
+
+```
+
