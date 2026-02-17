@@ -1,10 +1,10 @@
 ---
 title: "Paddock Report"
-Site: "Walpeup"
-Paddock: "MRS125"
 author: "Jackie Ouzman"
 date: "2026-02-08"
 output: html_document
+Paddock: MRS125
+Site: Walpeup
 ---
 
 ```{r setup, include=FALSE}
