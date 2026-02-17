@@ -56,7 +56,7 @@ DT::datatable(list_of_sites)
 * Shiny application would be nice but then I have problem saving the output.
 
 ```{r sites_selction, echo=FALSE}
- site_selected <- "18113"
+ site_selected <- "76065"
 print(site_selected)
 ```
 
