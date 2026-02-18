@@ -29,9 +29,11 @@ library(readr)
 # site_number <- "3.Wynarka_Mervs_West"
 # site_name <- "Wynarka_Mervs_West"
 
-site_number <- "4.Wharminda"
-site_name <- "Wharminda"
+# site_number <- "4.Wharminda"
+# site_name <- "Wharminda"
 
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 
@@ -73,7 +75,7 @@ file_path_details <- readxl::read_excel(
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
-#analysis.type <- "Harvest index" # 
+analysis.type <- "Harvest index" # 
 #analysis.type <- "Protein"
 
 
@@ -95,6 +97,7 @@ treat.col.name <- "treat_desc"
 #################################################################################
 ### sometimes you will need to specify the sheet###
 dat.raw <-   read_excel(file.path(headDir,    field_details$data), sheet = "Jackie")
+#dat.raw <-   read_excel(file.path(headDir,    field_details$data), sheet = "Jackie GUMS")
 #dat.raw <-   read_excel(file.path(headDir,   field_details$data), sheet = "Jackie_MRS125")
 data.pts <-  st_read   (file.path(headDir,   field_details$sampling_GPS))
 ## Note that the data in these 2 files do not always match
