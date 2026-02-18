@@ -1,7 +1,18 @@
-library(dplyr)
+
 library(purrr)
 library(readr)
 library(stringr)
+library(terra)
+library(sf)
+library(ggplot2)
+library(multcomp)
+library(dplyr)
+library(tidyr)
+library(broom)
+library(multcompView)
+library(lubridate)
+library(readxl)
+
 
 
 # site_number <- "1.Walpeup_MRS125"
@@ -97,7 +108,8 @@ zones <- zones %>% rename("zone" = "cluster3"  ,
                           #"zone" = "gridcode"  ,
                           "zone_ha" = "POLY_AREA")
 names(strip)
-strip <- strip %>% rename("strip_ha" = "POLY_AREA") %>% dplyr::select(-"rep" )
+strip <- strip %>% rename("strip_ha" = "POLY_AREA") 
+#strip <- strip %>% rename("strip_ha" = "POLY_AREA") %>% dplyr::select(-"rep" )
 
 # Spatial join to find which zone polygon each point falls into
 dat_with_zone <- st_join(dat_combined_sf, zones)

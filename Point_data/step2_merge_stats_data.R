@@ -24,9 +24,11 @@ library(emmeans)
 # site_number <- "3.Wynarka_Mervs_West"
 # site_name <- "Wynarka_Mervs_West"
 
-site_number <- "4.Wharminda"
-site_name <- "Wharminda"
+# site_number <- "4.Wharminda"
+# site_name <- "Wharminda"
 
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
