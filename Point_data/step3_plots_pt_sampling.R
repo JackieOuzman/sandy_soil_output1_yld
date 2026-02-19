@@ -33,8 +33,12 @@ library(readxl)
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
+
+site_number <- "6.Crystal_Brook_Randals"
+site_name <- "Crystal_Brook_Randals"
+
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -107,8 +111,11 @@ strips_zones_merged_stats_df <- read_csv(paste0(headDir_analysis_folder,
 
 ################################################################################
 #append the metadata
+
+
 strips_merged_stats_df <- left_join(strips_merged_stats_df, strip_names_details)
 names(strips_merged_stats_df)
+
 names(Pt_sampling_details)
 strips_merged_stats_df <- left_join(strips_merged_stats_df,
                                       Pt_sampling_details,
@@ -124,8 +131,8 @@ strips_merged_stats_df <- left_join(strips_merged_stats_df,
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-variable <- "Harvest index" # 
-#variable <- "Protein"
+#variable <- "Harvest index" # 
+variable <- "Protein"
 
 
 # Create the bar plot from the strip analysis data

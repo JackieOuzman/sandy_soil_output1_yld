@@ -32,8 +32,11 @@ library(readr)
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
+
+site_number <- "6.Crystal_Brook_Randals"
+site_name <- "Crystal_Brook_Randals"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 
@@ -75,8 +78,8 @@ file_path_details <- readxl::read_excel(
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
-analysis.type <- "Harvest index" # 
-#analysis.type <- "Protein"
+#analysis.type <- "Harvest index" # 
+analysis.type <- "Protein"
 
 
 

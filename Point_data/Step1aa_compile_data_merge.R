@@ -27,8 +27,11 @@ library(readxl)
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
+
+site_number <- "6.Crystal_Brook_Randals"
+site_name <- "Crystal_Brook_Randals"
 
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
@@ -66,7 +69,8 @@ file_df
 
   #dat_combined <- csv_files[1:8] %>%
   #dat_combined <- csv_files[1:3] %>%
-  dat_combined <- csv_files[1:6] %>%
+  #dat_combined <- csv_files[1:6] %>%
+  dat_combined <- csv_files[1:7] %>%
   lapply(function(file) {
     read_csv(file, col_types = cols(date_field_observation = col_character())) %>%
       mutate(source_file = basename(file))
@@ -86,6 +90,8 @@ zones <- st_read(
 strip <- st_read(
   paste0(headDir,file_path_details$`trial.plan`))
 
+strip <- strip %>% rename(treat_id = id)
+
 ## convert combined data into pt shape file
 
 # Convert dataframe to sf object
@@ -103,7 +109,8 @@ ggplot() +
 
 # points are located in zone and strips
 names(zones)
-zones <- zones %>% rename("zone" = "cluster3"  ,
+zones <- zones %>% rename("zone" = "cluster"  ,
+                          #"zone" = "cluster3"  ,
                           #"zone" = "fcl_mdl"  ,
                           #"zone" = "gridcode"  ,
                           "zone_ha" = "POLY_AREA")
