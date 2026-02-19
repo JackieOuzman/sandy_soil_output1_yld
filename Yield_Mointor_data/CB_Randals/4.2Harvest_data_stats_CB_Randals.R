@@ -28,8 +28,12 @@ library(readr)
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
+
+site_number <- "6.Crystal_Brook_Randals"
+site_name <- "Crystal_Brook_Randals"
+
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -109,12 +113,12 @@ df <- Yld_ladders_df %>%
 names(df)
 #This is a temp df to look up names if needed
 new_names_temp <- df %>% 
-  distinct(treat, .keep_all = TRUE) %>% 
-  select(treat, treat_id, treat_desc)
+  dplyr::distinct(treat, .keep_all = TRUE) %>% 
+  dplyr::select(treat, treat_id, treat_desc)
 #making a new clm 
 df <- df %>%
-  rename(treat_original = treat) %>%
-  mutate(treat = gsub("-", "_", treat_original))
+  dplyr::rename(treat_original = treat) %>%
+  dplyr::mutate(treat = gsub("-", "_", treat_original))
 
 
 summary_stats <- df %>%

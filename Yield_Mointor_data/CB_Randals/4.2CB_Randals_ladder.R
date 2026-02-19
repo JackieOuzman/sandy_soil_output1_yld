@@ -31,8 +31,11 @@ library(broom)
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
+
+site_number <- "6.Crystal_Brook_Randals"
+site_name <- "Crystal_Brook_Randals"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -58,8 +61,8 @@ print(sheet_names_metadata)
 zone_shapefile_path <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "location of file and details") %>% 
-  filter(Site == site_number) %>% 
-  select(`location of zone shp`) %>% 
+  dplyr::filter(Site == site_number) %>% 
+  dplyr::select(`location of zone shp`) %>% 
   pull()
 
 zone_shapefile_path
@@ -67,18 +70,17 @@ zone_shapefile_path
 harvest_data_file <-  readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "Harvest_data") %>% 
-  filter(Site == site_number)
+  dplyr::filter(Site == site_number)
 
 file_path_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "location of file and details") %>% 
-  filter(Site == site_number)
+  dplyr::filter(Site == site_number)
 
 ################################################################################
 # Load the files 
 
-# harvest_raw <- st_read(
-#   paste0(headDir,"/", harvest_data_file$files))
+
 
 ## This file is the raw data supplied projected in QGIS thinned only 
 #1.Walpeup had header rows removed manually 
@@ -94,14 +96,14 @@ str(harvest_raw_ish)
 harvest_raw_ish
 names(harvest_raw_ish)
 ## how many machines?
-harvest_raw_ish %>% dplyr::distinct(Machine)
+# harvest_raw_ish %>% dplyr::distinct(Machine)
 
 ##subset the data
 
 harvest_raw_ish <- harvest_raw_ish %>%
-  select(VRYIELDMAS,  Easting, Northing, Machine  )
+  #select(VRYIELDMAS,  Easting, Northing, Machine  )
   #select(YldMassDry,  Easting, Northing  )
-  #select(DryYield,  Easting, Northing  )
+  select(DryYield,  Easting, Northing  )
 
 
 names(harvest_raw_ish)
@@ -164,8 +166,8 @@ str(yld_data_with_ladders)
 #append the zone info to the yld data
 names(zones)
 zones <- #zones %>% rename(zone = fcl_mdl, clust_ha = POLY_AREA)
-        zones %>% rename(zone = cluster3, clust_ha = POLY_AREA)
-        #zones %>% rename(zone = cluster, clust_ha = POLY_AREA)
+        #zones %>% rename(zone = cluster3, clust_ha = POLY_AREA)
+        zones %>% rename(zone = cluster, clust_ha = POLY_AREA)
 
 yld_data_with_ladders_clus <- st_join(yld_data_with_ladders, zones, join = st_within)
 str(yld_data_with_ladders_clus)
@@ -181,12 +183,13 @@ yld_data_with_ladders_clus <- yld_data_with_ladders_clus %>%
 
 str(yld_data_with_ladders_clus)
 #
-
+yld_data_with_ladders_clus <- yld_data_with_ladders_clus %>% 
+  rename(treat_id = id)
 
 yld_data_with_summary <- yld_data_with_ladders_clus %>% 
   group_by(treat_Ladder_PointID, treat, treat_id, treat_desc, Ladder_PointID) %>% 
-  summarise(mean_yld = mean(VRYIELDMAS, na.rm = TRUE),
-            #mean_yld = mean(DryYield, na.rm = TRUE),
+  summarise(#mean_yld = mean(VRYIELDMAS, na.rm = TRUE),
+            mean_yld = mean(DryYield, na.rm = TRUE),
             #mean_yld = mean(YldMassDry, na.rm = TRUE),
             mean_zone = round(mean(zone, na.rm = TRUE)),
             n_yld_pt = n(),

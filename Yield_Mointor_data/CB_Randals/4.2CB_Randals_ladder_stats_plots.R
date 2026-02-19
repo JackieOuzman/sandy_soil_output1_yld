@@ -26,8 +26,12 @@ library(readxl)
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
+
+site_number <- "6.Crystal_Brook_Randals"
+site_name <- "Crystal_Brook_Randals"
+
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
@@ -50,11 +54,11 @@ print(sheet_names_metadata)
 strip_names_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "treatment names") %>% 
-  filter(Site == site_number)
+  dplyr::filter(Site == site_number)
 
 names(strip_names_details)
 strip_names_details <- strip_names_details %>% 
-  select("treat" ,
+  dplyr::select("treat" ,
          "Shorthand names" ,
          "Treatment name",
          "Order_in_paddock" ,
@@ -64,7 +68,7 @@ zone_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "zone_details") %>% 
   filter(Site == site_number) %>% 
-  select(`zone names`, `zone label names`)
+  dplyr::select(`zone names`, `zone label names`)
 zone_details
 
 ################################################################################
@@ -109,7 +113,7 @@ names(strips_zones_merged_stats_df)
 
 # Reorder treat based on Order_in_paddock
 strips_zones_merged_stats_df <- strips_zones_merged_stats_df %>%
-  mutate(treat = reorder(treat, Order_in_paddock),
+  dplyr::mutate(treat = reorder(treat, Order_in_paddock),
          `Treatment name` = reorder(`Treatment name`, Order_in_paddock))
 str(strips_zones_merged_stats_df)
 zone_details
@@ -118,7 +122,7 @@ strips_zones_merged_stats_df <- left_join(strips_zones_merged_stats_df,
                                           zone_details,
                                           join_by(zone == `zone names`)) 
 strips_zones_merged_stats_df <- strips_zones_merged_stats_df %>% 
-  rename(`zone_label` = `zone label names`)
+  dplyr::rename(`zone_label` = `zone label names`)
 
 ##################################################################################
 
