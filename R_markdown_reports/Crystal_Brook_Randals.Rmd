@@ -474,13 +474,13 @@ knitr::include_graphics(
   c(
     paste0(site_name, "_images/plots/", "Establishment", "_strip_mean_ANOVA_plot.png"),
     #paste0(site_name, "_images/plots/", "Establishment CV", "_strip_mean_ANOVA_plot.png"),
-    paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
+    #paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_ANOVA_plot.png"),
     
      paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_ANOVA_plot.png"),
      paste0(site_name, "_images/plots/", "Grain yield", "_strip_mean_ANOVA_plot.png"),
-    # paste0(site_name, "_images/plots/", "Protein", "_strip_mean_ANOVA_plot.png")#,
-     paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_ANOVA_plot.png")#,
-    # paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_ANOVA_plot.png")
+     paste0(site_name, "_images/plots/", "Protein", "_strip_mean_ANOVA_plot.png"),
+     paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_ANOVA_plot.png"),
+     paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_ANOVA_plot.png")
     
   )
 )
@@ -555,10 +555,10 @@ Analysis in R:
 ```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
  
 
- knitr::include_graphics(
-   c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
-     paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
- )
+ # knitr::include_graphics(
+ #   c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
+ #     paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
+ # )
 
 # ## NB Results are here   
 # ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Harvest\
