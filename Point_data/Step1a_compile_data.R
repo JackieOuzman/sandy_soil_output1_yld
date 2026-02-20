@@ -26,8 +26,8 @@ library(readr)
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-# site_number <- "3.Wynarka_Mervs_West"
-# site_name <- "Wynarka_Mervs_West"
+ site_number <- "3.Wynarka_Mervs_West"
+ site_name <- "Wynarka_Mervs_West"
 
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
@@ -35,8 +35,8 @@ library(readr)
 # site_number <- "5.Walpeup_Gums"
 # site_name <- "Walpeup_Gums"
 
-site_number <- "6.Crystal_Brook_Randals"
-site_name <- "Crystal_Brook_Randals"
+#site_number <- "6.Crystal_Brook_Randals"
+#site_name <- "Crystal_Brook_Randals"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 
@@ -72,14 +72,14 @@ file_path_details <- readxl::read_excel(
 #Bring in the data for each field sampling event. These analysis.type are defined by Stirling
 
 #analysis.type <- "Establishment" #
-#analysis.type <- "Establishment CV" #
+analysis.type <- "Establishment CV" #
 #analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
 #analysis.type <- "Harvest index" # 
-analysis.type <- "Protein"
+#analysis.type <- "Protein"
 
 
 

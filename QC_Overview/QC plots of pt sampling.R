@@ -150,20 +150,82 @@ all_sites <- all_sites %>%
   )))
 names(all_sites)
 
+
+label_df <- all_sites %>%
+  group_by(site_short, facet_label) %>%
+  summarise(
+    label = paste(unique(format(na.omit(date_field_observation), "%d-%b")), collapse = "\n"),
+    y_pos = max(target.variable, na.rm = TRUE)
+  ) %>%
+  mutate(label = ifelse(label == "", "TBC", label)) %>%
+  ungroup()
+
+label_df
+distinct(label_df, facet_label)
+
 # Plot
 ggplot(all_sites, aes(x = site_short, y = target.variable, colour = Crop)) +
   geom_point() +
   facet_wrap(. ~ facet_label, scales = "free_y") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  geom_text(data = label_df, aes(x = site_short, y = y_pos, label = label), 
+            vjust = -0.3, hjust = 0.5, size = 2.5, colour = "black", angle = 90) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  labs(x = NULL, y = NULL)
 
 
-## Plot with control
-control_sites <- all_sites %>% 
-  filter(treat == "C")
+
+bounds_df <- data.frame(
+  facet_label = c("Establishment (plants/m2)", "Establishment (plants/m2)",
+                  "Biomass_flowering (kg/ha)", "Biomass_flowering (kg/ha)",
+                  "Biomass_maturity (kg/ha)", "Biomass_maturity (kg/ha)",
+                  "Grain yield (kg/ha)", "Grain yield (kg/ha)",
+                  "Harvest index (%)", "Harvest index (%)",
+                  "Thousand grain weight (g/1000 grains)", "Thousand grain weight (g/1000 grains)",
+                  "Protein (%)", "Protein (%)"),
+  bound = c(100, 400,
+            5000, 15000,
+            8000, 20000,
+            500, 6000,
+            35, 55,
+            25, 55,
+            8, 16),
+  bound_type = c("lower", "upper", "lower", "upper", "lower", "upper", "lower", "upper",
+                 "lower", "upper", "lower", "upper", "lower", "upper")
+)
+
+facet_order <- c("Establishment (plants/m2)",
+                 "Establishment CV (%)",
+                 "Biomass_flowering (kg/ha)",
+                 "Biomass_maturity (kg/ha)",
+                 "Grain yield (kg/ha)",
+                 "Harvest index (%)",
+                 "Thousand grain weight (g/1000 grains)",
+                 "Protein (%)")
+
+bounds_df$facet_label <- factor(bounds_df$facet_label, levels = facet_order)
+all_sites$facet_label <- factor(all_sites$facet_label, levels = facet_order)
 
 ggplot(all_sites, aes(x = site_short, y = target.variable, colour = Crop)) +
   geom_point() +
-  geom_point(data = control_sites, aes(x = site_short, y = target.variable), 
-             shape = 8, size = 3, colour = "black") +
+  geom_hline(data = bounds_df, aes(yintercept = bound, linetype = bound_type), 
+             colour = "red", linewidth = 0.5) +
+  scale_linetype_manual(values = c("lower" = "dashed", "upper" = "dashed")) +
   facet_wrap(. ~ facet_label, scales = "free_y") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  geom_text(data = label_df, aes(x = site_short, y = y_pos, label = label), 
+            vjust = -0.3, hjust = 0.5, size = 2.5, colour = "black", angle = 90) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  guides(linetype = "none") +
+  labs(x = NULL, y = NULL,
+       title = "Quality control 2026 point sampling output 1 2026",
+       subtitle = "BH was often weedy, broadcast sowing at some sites",
+       caption = "Check data BH harvest data to be included, and cals at Randals")
+
+
+
+################################################################################
+### collate the files source used for this anlysis.
+

@@ -21,8 +21,8 @@ library(readxl)
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-# site_number <- "3.Wynarka_Mervs_West"
-# site_name <- "Wynarka_Mervs_West"
+site_number <- "3.Wynarka_Mervs_West"
+site_name <- "Wynarka_Mervs_West"
 
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
@@ -30,8 +30,8 @@ library(readxl)
 # site_number <- "5.Walpeup_Gums"
 # site_name <- "Walpeup_Gums"
 
-site_number <- "6.Crystal_Brook_Randals"
-site_name <- "Crystal_Brook_Randals"
+#site_number <- "6.Crystal_Brook_Randals"
+#site_name <- "Crystal_Brook_Randals"
 
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
@@ -109,9 +109,9 @@ ggplot() +
 
 # points are located in zone and strips
 names(zones)
-zones <- zones %>% rename("zone" = "cluster"  ,
+zones <- zones %>% rename(#"zone" = "cluster"  ,
                           #"zone" = "cluster3"  ,
-                          #"zone" = "fcl_mdl"  ,
+                          "zone" = "fcl_mdl"  ,
                           #"zone" = "gridcode"  ,
                           "zone_ha" = "POLY_AREA")
 names(strip)
