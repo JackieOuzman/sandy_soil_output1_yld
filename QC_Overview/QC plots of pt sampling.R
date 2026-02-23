@@ -225,7 +225,10 @@ ggplot(all_sites, aes(x = site_short, y = target.variable, colour = Crop)) +
        caption = "Check data BH harvest data to be included, and cals at Randals")
 
 
+ggsave(paste0(metadata_path,"Jackie_QC/",
+              'QC_2025point_data.png'))
+
 
 ################################################################################
-### collate the files source used for this anlysis.
+### collate the files source used for this analysis  - Done in excel metadata sheet
 
