@@ -126,6 +126,16 @@ names(df)
 
 
 str(df)
+
+## At Mervs they moved the control strip but never collected any samples in new control, so its NA
+unique(df$treat)
+df <- df %>% dplyr::mutate(
+  treat = case_when(
+    is.na(treat) ~ "C",
+    .default = treat
+  ))
+unique(df$treat)
+
 summary_stats <- df %>%
   filter(field_observation == variable ) %>% 
   group_by(treat) %>% 
@@ -143,9 +153,12 @@ summary_stats <- df %>%
   )
 summary_stats
 str(df)
+unique(df$treat)
+
 
 
 control_group <- df %>% filter(treat == "C")
+
 
 t_test_results <- df %>%
   filter(treat != "C") %>%
@@ -155,8 +168,8 @@ t_test_results <- df %>%
   ungroup() %>%
   mutate(
     adj_p_value = p.adjust(p.value, method = "bonferroni"),
-    significance = ifelse(adj_p_value <= 0.1, "Significant", "Not Significant") #90% CI
-  )
+    significance = ifelse(adj_p_value <= 0.1, "Significant", "Not Significant") 
+  )#90% CI
 
 # Build letter display
 letters_display <- t_test_results %>%
