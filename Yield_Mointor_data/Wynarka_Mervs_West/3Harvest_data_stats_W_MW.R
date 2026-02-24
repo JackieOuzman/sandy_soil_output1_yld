@@ -45,20 +45,13 @@ crs_used <- 7854
 ########################    Read in metadata info file names and path ##########
 ################################################################################
 
-file_path_details <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "location of file and details") %>% 
-  filter(Site == site_number)
+
 
 seasons <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
   sheet = "seasons") %>% 
   filter(Site == site_number)
 
-harvest_data_file <-  readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "Harvest_data") %>% 
-  filter(Site == site_number)
 
 
 ###############################################################################
@@ -84,9 +77,6 @@ treat.col.name <- "treat"
 ## Define name of control
 control.name <- "Control"
 
-## Define name of Buffer (if applicable)
-buffer.name <- "Buffer"
-
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%% General Stats - Observed Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -94,27 +84,9 @@ buffer.name <- "Buffer"
 
 ################################################################################
 ## Step 4) Compute summary statistics for whole of field
-
-
-str(Yld_ladders_df)
-
-### std some names and clm names
 df <- Yld_ladders_df %>% 
   rename(target.variable = mean_yld)
-
-### The analysis code doesn't like "-" so here we are replacing with "_"
-
-names(df)
-#This is a temp df to look up names if needed
-new_names_temp <- df %>% 
-  distinct(treat, .keep_all = TRUE) %>% 
-  select(treat, treat_id, treat_desc)
-#making a new clm 
-df <- df %>%
-  rename(treat_original = treat) %>%
-  mutate(treat = gsub("-", "_", treat_original))
-
-
+str(df)
 summary_stats <- df %>%
   group_by(treat) %>% 
   summarize(
@@ -129,36 +101,52 @@ summary_stats <- df %>%
     n_valid = sum(!is.na(target.variable)),     # Count of non-NA values
     n_na = sum(is.na(target.variable))  
   )
+summary_stats
+str(df)
+unique(df$treat)
+
+control_group <- df %>% filter(treat == "C")
 
 
-# Perform ANOVA
-anova <- aov(as.formula(paste("target.variable", "~", treat.col.name)), data = df)
-summary(anova)
+t_test_results <- df %>%
+  filter(treat != "C") %>%
+  group_by(treat) %>%
+  do(tidy(t.test(target.variable ~ treat, 
+                 data = rbind(control_group, .)))) %>%
+  ungroup() %>%
+  mutate(
+    adj_p_value = p.adjust(p.value, method = "bonferroni"),
+    significance = ifelse(adj_p_value <= 0.1, "Significant", "Not Significant") 
+  )#90% CI
 
-# Tukey HSD post-hoc test
-tukey <- TukeyHSD(anova)
-tukey_results <- as.data.frame(tukey[treat.col.name])
-
-# Get the significance letters from Tukey HSD results
-letters <- multcompLetters4(anova, tukey)
-
-# Convert to a dataframe
-sig.out <- data.frame(
-  treat = names(letters[[treat.col.name]]$Letters), 
-  Significance = letters[[treat.col.name]]$Letters
-)
-names(sig.out)[1] <- treat.col.name
-
-summary_stats.2 <- inner_join(summary_stats,sig.out, by  = treat.col.name)
-print(summary_stats.2)
-
-### If you needed to modify the treat names replacing - with _ change it back
-
-summary_stats.2 <- summary_stats.2 %>%
-  mutate(treat = gsub("_", "-", treat))
+# Build letter display
+letters_display <- t_test_results %>%
+  select(treat, significance) %>%
+  mutate(group = ifelse(significance == "Significant", "b", "a")) %>%
+  # Add control back in - it always gets "a" as the reference
+  bind_rows(data.frame(treat = "C", significance = "Control", group = "a"))
 
 
-write.csv(summary_stats.2,paste0(headDir,'/10.Analysis/25/',analysis.type,
+letters_display
+
+results_table <- summary_stats %>%
+  left_join(letters_display %>% select(treat, group), by = "treat") %>%
+  left_join(t_test_results %>% select(treat, adj_p_value, significance), by = "treat") %>%
+  mutate(
+    adj_p_value = ifelse(is.na(adj_p_value), "-", round(adj_p_value, 3)),
+    group = ifelse(is.na(group), "a", group)
+  ) %>%
+  rename(Significance = group) %>%
+  select(treat, n_valid, mean, sd, median, Q1, Q3, min, max, Significance, adj_p_value)
+
+results_table
+
+results_table <- results_table %>% 
+  mutate(analysis.type = paste0(variable,"_Yr_", analysis.yr ))
+
+
+
+write.csv(results_table,paste0(headDir,'/10.Analysis/25/',analysis.type,
                                  '/Harvest_summary_strips_stats.csv'))
 
 ################################################################################
@@ -168,86 +156,86 @@ write.csv(summary_stats.2,paste0(headDir,'/10.Analysis/25/',analysis.type,
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ################################################################################
-## Step 6) Compute summary statistics by zone
-str(df)
-###
+
+
+
+## Compute summary statistics by zone
 df <- df %>% rename(zone = mean_zone)
 # Get unique gridcodes
 zone <- unique(df$zone)
+## at Merv the zone have 4 zone, but only 3 exist in the trial area
+zone <- c(1,2,4)
 
 # Store results in lists
-anova_list <- list()
-tukey_list <- list()
+ttest_list <- list()
 sig_letters_list <- list()
 
+
+
 for(gc in zone) {
-  # Subset data for this gridcode
   df_subset <- df %>% filter(zone == gc)
+  control_group <- df_subset %>% filter(treat == "C")
   
-  # Perform ANOVA
-  anova_model <- aov(target.variable ~ treat, data = df_subset)
+  # Control vs each treatment t-tests
+  ttest_df <- df_subset %>%
+    filter(treat != "C") %>%
+    group_by(treat) %>%
+    do(tidy(t.test(
+      c(control_group$target.variable, .$target.variable) ~ 
+        c(rep("C", nrow(control_group)), rep(.$treat[1], nrow(.))),
+    ))) %>%
+    ungroup() %>%
+    mutate(
+      adj_p_value = p.adjust(p.value, method = "bonferroni"),
+      zone = gc,
+      treat2 = "C"  # reference group
+    )
   
-  cat("\n=== ANOVA for Gridcode", gc, "===\n")
-  print(summary(anova_model))
+  cat("\n=== Control vs Treatment t-tests for Zone", gc, "===\n")
+  print(ttest_df %>% select(treat, adj_p_value))
   
-  # Tukey HSD
-  tukey <- TukeyHSD(anova_model)
-  cat("\n=== Tukey HSD for Gridcode", gc, "===\n")
-  print(tukey)
+  ttest_list[[as.character(gc)]] <- ttest_df
   
-  # Get significance letters
-  letters_obj <- multcompLetters4(anova_model, tukey)
+  # Build significance letters (relative to control)
+  sig_letters <- ttest_df %>%
+    select(treat, adj_p_value) %>%
+    mutate(group = ifelse(adj_p_value <= 0.1, "b", "a")) %>%
+    bind_rows(data.frame(treat = "C", adj_p_value = NA, group = "a")) %>%
+    mutate(zone = gc)
   
-  # Store ANOVA results
-  anova_list[[as.character(gc)]] <- data.frame(
-    gridcode = gc,
-    tidy(anova_model)
-  )
-  
-  # Store Tukey results
-  tukey_list[[as.character(gc)]] <- data.frame(
-    gridcode = gc,
-    comparison = rownames(tukey$treat),
-    tukey$treat,
-    row.names = NULL
-  )
-  
-  # Store significance letters
   sig_letters_list[[as.character(gc)]] <- data.frame(
-    gridcode = gc,
-    treat = names(letters_obj$treat$Letters),
-    Significance = as.character(letters_obj$treat$Letters)
+    zone = gc,
+    treat = sig_letters$treat,
+    Significance = sig_letters$group
   )
 }
 
-# Combine all results into data frames
-anova_results <- bind_rows(anova_list)
-tukey_results <- bind_rows(tukey_list)
+  
+
+
+
+# Combine results
+ttest_results <- bind_rows(ttest_list)
 sig_letters_all <- bind_rows(sig_letters_list)
 
-# View combined results
-print("ANOVA Results:")
-print(anova_results)
-
-print("\nTukey HSD Results:")
-print(tukey_results)
-
-print("\nSignificance Letters:")
+print("Pairwise t-test Results:")
+print(ttest_results)
+print("Significance Letters:")
 print(sig_letters_all)
-sig_letters_all <- sig_letters_all %>% rename(zone = gridcode )
+
 
 ####################################################################
-# Create summary statistics by gridcode and treatment
+# Summary statistics by zone and treatment
 summary_stats_zone <- df %>%
-  st_drop_geometry() %>% 
+  st_drop_geometry() %>%
   group_by(zone, treat, treat_desc) %>%
   summarise(
-    mean = mean(target.variable, na.rm = TRUE),
+    mean   = mean(target.variable, na.rm = TRUE),
     median = median(target.variable, na.rm = TRUE),
-    sd = sd(target.variable, na.rm = TRUE),
-    Q1 = quantile(target.variable, 0.25, na.rm = TRUE),
-    Q3 = quantile(target.variable, 0.75, na.rm = TRUE),
-    n = n(),
+    sd     = sd(target.variable, na.rm = TRUE),
+    Q1     = quantile(target.variable, 0.25, na.rm = TRUE),
+    Q3     = quantile(target.variable, 0.75, na.rm = TRUE),
+    n      = n(),
     .groups = "drop"
   )
 
@@ -255,12 +243,12 @@ summary_stats_zone <- df %>%
 summary_stats.2 <- summary_stats_zone %>%
   inner_join(sig_letters_all, by = c("zone", "treat"))
 
-print(summary_stats.2)
 
-### If you needed to modify the treat names replacing - with _ change it back
 
-summary_stats.2 <- summary_stats.2 %>%
-  mutate(treat = gsub("_", "-", treat))
+summary_stats.2
+
+
+
 
 
 

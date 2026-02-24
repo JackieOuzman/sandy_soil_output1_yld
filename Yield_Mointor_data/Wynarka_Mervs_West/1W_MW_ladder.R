@@ -95,15 +95,17 @@ ladders_data_file_path
 #1.Walpeup had header rows removed manually 
 
 harvest_raw_ish <- st_read(
-  paste0(headDir,"/", harvest_data_file$files))
+  paste0(headDir,"/", harvest_data_file_path))
 
 
 str(harvest_raw_ish)
+
 #############
 ## work out which clm to use ### Stirling doesn't want to adjust for moisture
 
 harvest_raw_ish
 names(harvest_raw_ish)
+
 ### what is "CRUDEFI"    "CrdPrPr"
 
 harvest_raw_ish %>% dplyr::distinct(Machine)
@@ -125,13 +127,20 @@ zones <- st_read(
 strip <- st_read(
   paste0(headDir,strips_shapefile_path))
 
+unique(strip$treat_desc)
+
 ################################################################################
 ### Load in the ladders that I made in qgis using Christina tools
 
 ladders_qgis <-st_read(
   paste0(headDir,"/", ladders_data_file_path))
   
- 
+unique(ladders_qgis$treat_desc)
+#Just removes any white spaces
+ladders_qgis <- ladders_qgis %>%
+  mutate(treat_desc = stringr::str_remove_all(treat_desc, "\n") %>% trimws())
+unique(ladders_qgis$treat_desc)
+
 
 ################################################################################
 

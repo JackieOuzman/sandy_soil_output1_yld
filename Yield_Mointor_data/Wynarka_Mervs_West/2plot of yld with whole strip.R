@@ -11,6 +11,8 @@ library(terra)
 library(tidyterra)
 library(readxl)
 library(broom)
+
+
 site_number <- "3.Wynarka_Mervs_West"
 site_name <- "Wynarka_Mervs_West"
 

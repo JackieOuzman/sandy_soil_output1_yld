@@ -53,10 +53,24 @@ strip_names_details <- readxl::read_excel(
 names(strip_names_details)
 strip_names_details <- strip_names_details %>% 
   select("treat" ,
-         "Shorthand names" ,
-         "Treatment name",
-         "Order_in_paddock" ,
-         "Colour_number_plot")
+         "Shorthand Name"  ,
+         "Treatment Name" ,
+         "Order in Paddock" ,
+         "Hex" )
+
+# zone_shapefile_path <- readxl::read_excel(
+#   paste0(metadata_path,metadata_file_name),
+#   sheet = "file location etc") %>% 
+#   filter(Site == site_number) %>% 
+#   filter(variable == "location of zone shp") %>% 
+#   pull("file path")
+# strips_shapefile_path <- readxl::read_excel(
+#   paste0(metadata_path,metadata_file_name),
+#   sheet = "file location etc") %>% 
+#   filter(Site == site_number) %>% 
+#   filter(variable == "trial.plan") %>% 
+#   pull("file path")
+
 
 zone_details <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
@@ -95,8 +109,8 @@ names(strips_merged_stats_df)
 
 # Reorder treat based on Order_in_paddock
 strips_merged_stats_df <- strips_merged_stats_df %>%
-  mutate(treat = reorder(treat, Order_in_paddock),
-         `Treatment name` = reorder(`Treatment name`, Order_in_paddock))
+  dplyr::mutate(treat = reorder(treat, `Order in Paddock`),
+         `Treatment Name` = reorder(`Treatment Name`, `Order in Paddock`))
 str(strips_merged_stats_df)
 
 
@@ -107,8 +121,8 @@ names(strips_zones_merged_stats_df)
 
 # Reorder treat based on Order_in_paddock
 strips_zones_merged_stats_df <- strips_zones_merged_stats_df %>%
-  mutate(treat = reorder(treat, Order_in_paddock),
-         `Treatment name` = reorder(`Treatment name`, Order_in_paddock))
+  mutate(treat = reorder(treat, `Order in Paddock`),
+         `Treatment Name` = reorder(`Treatment Name`, `Order in Paddock`))
 str(strips_zones_merged_stats_df)
 zone_details
 strips_zones_merged_stats_df$zone <- as.character(strips_zones_merged_stats_df$zone)
@@ -122,8 +136,8 @@ strips_zones_merged_stats_df <- strips_zones_merged_stats_df %>%
 
 site.bar.plot <-
   strips_merged_stats_df %>%
-  mutate(treat = reorder(treat, Order_in_paddock)) %>%
-  ggplot(aes(x = treat, y = mean, fill = `Treatment name`)) +
+  mutate(treat = reorder(treat, `Order in Paddock`)) %>%
+  ggplot(aes(x = treat, y = mean, fill = `Treatment Name`)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(
@@ -134,13 +148,13 @@ site.bar.plot <-
   ) +
   labs(
     title = "",
-    caption = "One-way ANOVA followed by Tukey's HSD post-hoc test at 95% confidence",
+    caption = "Treatment compared to the control using t-tests with Bonferroni-adjusted p-values, (p ≤ 0.10)",
     x = NULL,
     y = paste0("Yield. t/ha", "\n", "Header"),  # \n creates line break
     fill = NULL
   ) +
-  scale_fill_manual(values = setNames(strips_merged_stats_df$Colour_number_plot, 
-                                      strips_merged_stats_df$`Treatment name`)) +
+  scale_fill_manual(values = setNames(strips_merged_stats_df$Hex, 
+                                      strips_merged_stats_df$`Treatment Name`)) +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +
   theme_minimal() +
   theme(
@@ -170,8 +184,8 @@ strips_zones_merged_stats_df
 
 site.bar.plot <-
   strips_zones_merged_stats_df %>%
-  mutate(treat = reorder(treat, Order_in_paddock)) %>%
-  ggplot(aes(x = treat, y = mean, fill = `Treatment name`)) +
+  mutate(treat = reorder(treat, `Order in Paddock`)) %>%
+  ggplot(aes(x = treat, y = mean, fill = `Treatment Name`)) +
   geom_col(alpha = 0.7) +
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(
@@ -183,13 +197,13 @@ site.bar.plot <-
   facet_wrap(~ paste0(zone_label,"(", zone, ")" )) +  # Add this line
   labs(
     title = "",
-    caption = "One-way ANOVA followed by Tukey's HSD post-hoc test at 95% confidence",
+    caption = "Treatment compared to the control using t-tests with Bonferroni-adjusted p-values, (p ≤ 0.10)",
     x = NULL,
     y = paste0("Yield. t/ha", "\n", "Header"),
     fill = NULL
   ) +
-  scale_fill_manual(values = setNames(strips_merged_stats_df$Colour_number_plot, 
-                                      strips_merged_stats_df$`Treatment name`)) +
+  scale_fill_manual(values = setNames(strips_merged_stats_df$Hex, 
+                                      strips_merged_stats_df$`Treatment Name`)) +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +
   theme_minimal() +
   theme(
