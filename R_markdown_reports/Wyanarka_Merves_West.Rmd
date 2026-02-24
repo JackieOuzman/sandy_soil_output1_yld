@@ -2,15 +2,30 @@
 title: "Paddock Report"
 author: "Jackie Ouzman"
 date: "2026-02-08"
-output: html_document
-Paddock: Mervs West
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
 Site: Wynarka
+Paddock: Mervs West
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r setup2, include=FALSE}
+# rmarkdown::render("Wyanarka_Merves_West.Rmd", output_format = "pdf_document")
+# #rmarkdown::render("Wyanarka_Merves_West.Rmd", output_format = "word_document")
+# #rmarkdown::render("Wyanarka_Merves_West.Rmd", output_format = "html_document")
+
+if (knitr::is_html_output()) {
+  DT::datatable(df)
+} else {
+  knitr::kable(df)
+}
+
+```
 
 ```{r load_libary, include=FALSE}
 library(ggplot2)

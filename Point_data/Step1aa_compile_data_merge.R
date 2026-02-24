@@ -67,10 +67,10 @@ file_df
 
 
 
-  #dat_combined <- csv_files[1:8] %>%
+  dat_combined <- csv_files[1:8] %>%
   #dat_combined <- csv_files[1:3] %>%
   #dat_combined <- csv_files[1:6] %>%
-  dat_combined <- csv_files[1:7] %>%
+  #dat_combined <- csv_files[1:7] %>%
   lapply(function(file) {
     read_csv(file, col_types = cols(date_field_observation = col_character())) %>%
       mutate(source_file = basename(file))
@@ -80,15 +80,23 @@ file_df
 ################################################################################
 ## Join the zone and treatments
 
-file_path_details <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "location of file and details") %>% 
-  filter(Site == site_number)
-
+zones_path_details <- readxl::read_excel(
+    paste0(metadata_path,metadata_file_name),
+    sheet = "file location etc") %>% 
+    filter(Site == site_number)  %>% 
+    filter(variable == "location of zone shp") %>% 
+    pull("file path")
+strip_path_details <- readxl::read_excel(
+    paste0(metadata_path,metadata_file_name),
+    sheet = "file location etc") %>% 
+    filter(Site == site_number)  %>% 
+    filter(variable == "trial.plan") %>% 
+    pull("file path")  
+ 
 zones <- st_read(
-  paste0(headDir,file_path_details$`location of zone shp`))
+  paste0(headDir,zones_path_details))
 strip <- st_read(
-  paste0(headDir,file_path_details$`trial.plan`))
+  paste0(headDir,strip_path_details))
 
 strip <- strip %>% rename(treat_id = id)
 

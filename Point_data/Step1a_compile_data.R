@@ -53,15 +53,6 @@ metadata_file_name <- "names of treatments per site 2025 metadata and other info
 crs_used <- 4326 # Name: WGS 84 (World Geodetic System 1984) Type: Geographic coordinate system (latitude/longitude)
 projetion_crs <- 7854 #GDA2020 / MGA Zone 54 (EPSG:7854).
 
-################################################################################
-########################    Read in metadata info file names and path ##########
-################################################################################
-
-file_path_details <- readxl::read_excel(
-  paste0(metadata_path,metadata_file_name),
-  sheet = "location of file and details") %>% 
-  filter(Site == site_number)
-
 
 
 
@@ -72,37 +63,45 @@ file_path_details <- readxl::read_excel(
 #Bring in the data for each field sampling event. These analysis.type are defined by Stirling
 
 #analysis.type <- "Establishment" #
-analysis.type <- "Establishment CV" #
+#analysis.type <- "Establishment CV" #
 #analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
 #analysis.type <- "Harvest index" # 
-#analysis.type <- "Protein"
+analysis.type <- "Protein"
 
 
 
+################################################################################
+########################    Read in metadata info file names and path ##########
+################################################################################
 
 
-
-field_details <- readxl::read_excel(
+data_source <- readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
-  sheet = "location of observation data") %>% 
+  sheet = "file location etc") %>% 
   filter(Site == site_number)  %>% 
-  filter(analysis_type == analysis.type )
+  filter(variable == paste0(analysis.type, " data file" ))
 
-variable <- field_details$variable_clm_name
+shapefile_source <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "file location etc") %>% 
+  filter(Site == site_number)  %>% 
+  filter(variable == paste0(analysis.type, " shp file" ))
+
+# variable <- field_details$variable_clm_name
 treat.col.name <- "treat_desc"
 
 
 
 #################################################################################
 ### sometimes you will need to specify the sheet###
-dat.raw <-   read_excel(file.path(headDir,    field_details$data), sheet = "Jackie")
-#dat.raw <-   read_excel(file.path(headDir,    field_details$data), sheet = "Jackie GUMS")
-#dat.raw <-   read_excel(file.path(headDir,   field_details$data), sheet = "Jackie_MRS125")
-data.pts <-  st_read   (file.path(headDir,   field_details$sampling_GPS))
+dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie")
+#dat.raw <-   read_excel(file.path(headDir,    data_source$data), sheet = "Jackie GUMS")
+#dat.raw <-   read_excel(file.path(headDir,   data_source$data), sheet = "Jackie_MRS125")
+data.pts <-  st_read   (file.path(headDir,   shapefile_source$`file path`))
 ## Note that the data in these 2 files do not always match
 
 # data.pts_wgs <- st_transform(data.pts, crs= crs_used)
@@ -151,15 +150,30 @@ rm(dat.raw,data.pts, data.pts_proj, dat.all)
 ## Add some clms AND Retain only a subset of clms
 
 names(data_sf)
-str(field_details)
+## get the units and the dates
+
+date_collected <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "file location etc") %>% 
+  filter(Site == site_number)  %>% 
+  filter(variable == paste0(analysis.type, " date collected" )) %>% 
+  pull("other details")
+
+units <- readxl::read_excel(
+  paste0(metadata_path,metadata_file_name),
+  sheet = "units") %>% 
+  filter(variable_clm_name == paste0(analysis.type)) %>% 
+  pull("variable_units")
+
+
 
 data_sf <- data_sf %>% 
   dplyr::mutate(site = site_name,
          year = analysis.yr,
          field_observation = analysis.type, 
-         date_field_observation = field_details$Date_collected,
-         variable_name =  field_details$variable_name,
-         variable_units =  field_details$varibale_units
+         date_field_observation = date_collected,
+         variable_name =  analysis.type,
+         variable_units =  units
          ) 
 
 names(data_sf)
