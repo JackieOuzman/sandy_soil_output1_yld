@@ -190,25 +190,78 @@ gs_period <- unique(Sowing_metadata$GS_period)[1]
 summer_period <- unique(Sowing_metadata$summer_period)[1]
 years_included <- unique(Sowing_metadata$Years_included)[1]
 
-caption_text <- paste0("Trial Years Sowing and Rainfall Summary. \\\\ ",
+
+
+
+sowing_table1 <- sowing_table %>%
+  select("Year" , "Crop"  , "Variety", "Sowing date"  , "Harvest date")
+rain_table2 <- sowing_table %>%
+  select("Year" , "GS Rainfall (mm)"  , "Summer Rainfall (mm)", "GS Decile"   ,"Summer Decile" )
+
+
+```
+
+```{r rain table 2, echo=FALSE, message=FALSE, warning=FALSE}
+
+caption_text <- paste0("Trial Years with Rainfall Summary. \\\\ ",
                        "GS Period: ", gs_period, " \\\\ ",
                        "Summer Period: ", summer_period, " \\\\ ",
                        "Years Included: ", years_included)
-
-knitr::kable(sowing_table %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
+knitr::kable(rain_table2 %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
              caption = caption_text,
              booktabs = TRUE,
              longtable = FALSE) %>%
   kable_styling(latex_options = c("hold_position", "scale_down")) %>%
   column_spec(2, width = "3cm") %>%
   column_spec(3, width = "3cm")
+
+
+```
+
+```{r sowing table, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+knitr::kable(sowing_table1 %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
+             caption = "Trial Years Sowing Summary",
+             booktabs = TRUE,
+             longtable = FALSE) %>%
+  kable_styling(latex_options = c("hold_position", "scale_down")) %>%
+  column_spec(2, width = "3cm") %>%
+  column_spec(3, width = "3cm")
+
+
 ```
 
 ### Soil constraints at site
 
-Need some information here….
+```{r Soil constraints, include=FALSE}
+#Need some information here….
+
+path_constraints_description<- paste0(dir,"/work/multi-site analysis soil characteristics/Sandy Soils II-site descriptors.xlsx")
+
+constraints_description <- readxl::read_excel(path_constraints_description, sheet = "Constraints Description") %>%
+  dplyr::filter(Site == site_number) %>%
+  dplyr::select("Site",
+                "Repellence",
+                "Soil Strength",
+                "Acidity",
+                "Fertility",
+                "Carbonate",
+                "Notes") %>%
+  mutate(across(everything(), ~replace_na(as.character(.), "")))
 
 
+
+
+
+```
+
+```{r Soil constraints table, echo=FALSE}
+# Display with
+knitr::kable(constraints_description,
+             caption = "Constraints description",
+             booktabs = TRUE)
+```
 ### Management zones:
 
 #### Layers used to define management zone
@@ -420,7 +473,7 @@ knitr::include_graphics(paste0(site_name, "_images/sampling location jackie.png"
 
 Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. 
 
-A separate t-test was conducted for each treatment, with the control group serving as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
+A separate t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
 
 Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
 
@@ -493,7 +546,8 @@ Harvest data from the yield monitor (processed in QGIS using Christina Tools, an
 ```{r map of yld data rawish 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
  
 
-knitr::include_graphics(paste0(site_name, "_images/Yield data  jackie raw data.png"))
+knitr::include_graphics(paste0(site_name, "_images/Yield_data_jackie raw_data.png"))
+#knitr::include_graphics("Wynarka_Mervs_West_images/Yield data  jackie raw data.png")
 ```
 
 Strip ladder polygons  (in QGIS using Christina Tools):
@@ -505,7 +559,7 @@ Strip ladder polygons  (in QGIS using Christina Tools):
 ```{r map of yld data polygons 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
  
 
-knitr::include_graphics(paste0(site_name, "_images/Yield data  jackie ladders.png"))
+knitr::include_graphics(paste0(site_name, "_images/Yield_data_jackie_ladders.png"))
 ```
 
 Analysis in R:
@@ -519,15 +573,47 @@ Analysis in R:
 
 
 
-
-
-```{r Stats yld harvest data, echo=FALSE, warning=FALSE, out.width="50%", fig.show='hold'}
+```{r map of yld along strips , echo=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
  
 
-# knitr::include_graphics(
-#   c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"),
-#     paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
-# )
+knitr::include_graphics(paste0(site_name, "_images/Yld_monitor_strip_distance.png"))
+```
+
+
+# Analysis by strips
+A separate t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
+
+
+```{r Stats yld harvest data strips, echo=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+ 
+
+knitr::include_graphics(
+  c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"))
+)
+
+# ## NB Results are here   
+# ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Harvest\
+# ## NB Analysis script is here
+# #"\\pentagon-gw\C$\Users\ouz001\working_from_home_post_Sep2022\sandy_soil_output1_yld\Yield_#Mointor_data"
+# 
+# # I have copied the plots over to the local drive so R markdown can access them.
+
+```
+
+# Analysis by strips and zones
+
+Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. This analysis was conducted separately within each management zone, such that a separate set of t-tests was performed for each zone, with each treatment compared to the control observations within that same zone. Note that while four management zones were defined across the broader field, only three zones (1, 2, and 4) were present within the trial area and were therefore included in the analysis. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
+
+
+
+
+
+```{r Stats yld harvest data, echo=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+ 
+
+knitr::include_graphics(
+  c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_zone_plot", ".png"))
+)
 
 # ## NB Results are here   
 # ## "\\fs1-cbr.nexus.csiro.au\{af-sandysoils-ii}\work\Output-1\site\10.Analysis\25\Harvest\
