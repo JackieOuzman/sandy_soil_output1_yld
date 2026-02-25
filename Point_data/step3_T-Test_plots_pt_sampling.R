@@ -22,14 +22,14 @@ library(stringr)
 ########################            Define the directory              ##########
 ################################################################################
 
-# site_number <- "1.Walpeup_MRS125"
-# site_name <- "Walpeup_MRS125"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
 
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
@@ -138,8 +138,8 @@ names(Pt_sampling_details)
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-#variable <- "Harvest index" # 
-variable <- "Protein"
+variable <- "Harvest index" # 
+#variable <- "Protein"
 
 
 # Create the bar plot from the strip analysis data
