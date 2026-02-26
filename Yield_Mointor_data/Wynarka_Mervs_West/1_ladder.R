@@ -22,14 +22,14 @@ library(broom)
 ################################################################################
 ########################            Define the directory              ##########
 ################################################################################
-# site_number <- "1.Walpeup_MRS125"
-# site_name <- "Walpeup_MRS125"
+ site_number <- "1.Walpeup_MRS125"
+ site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
 
 
 
@@ -175,7 +175,8 @@ yld_data_with_ladders <- st_join(harvest_clipped, ladders_qgis, join = st_within
 str(yld_data_with_ladders)
 #append the zone info to the yld data
 names(zones)
-zones <- zones %>% rename(zone = fcl_mdl, clust_ha = POLY_AREA)
+zones <- zones %>% #rename(zone = fcl_mdl, clust_ha = POLY_AREA)
+                   rename(zone = gridcode, clust_ha = POLY_AREA)
                    #rename(zone = cluster, clust_ha = POLY_AREA)
 
 yld_data_with_ladders_clus <- st_join(yld_data_with_ladders, zones, join = st_within)

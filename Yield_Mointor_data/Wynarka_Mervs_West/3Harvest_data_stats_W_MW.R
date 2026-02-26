@@ -19,14 +19,14 @@ library(readr)
 ################################################################################
 ########################            Define the directory              ##########
 ################################################################################
-# site_number <- "1.Walpeup_MRS125"
-# site_name <- "Walpeup_MRS125"
+ site_number <- "1.Walpeup_MRS125"
+ site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+#site_number <- "3.Wynarka_Mervs_West"
+#site_name <- "Wynarka_Mervs_West"
 
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
@@ -63,7 +63,15 @@ Yld_ladders_df <- read_csv(
 Yld_ladders_df
 
 
+##define the the control
+unique(Yld_ladders_df$treat_desc)
 
+Yld_ladders_df <- Yld_ladders_df %>% 
+  dplyr::mutate(treat_desc = case_when(
+    treat_desc== "Control (-Tillage -Lime)" ~ "Control",
+    .default = as.character(treat_desc)))
+
+unique(Yld_ladders_df$treat_desc)
 
 
 ################################################################################
@@ -164,7 +172,7 @@ df <- df %>% rename(zone = mean_zone)
 # Get unique gridcodes
 zone <- unique(df$zone)
 ## at Merv the zone have 4 zone, but only 3 exist in the trial area
-zone <- c(1,2,4)
+#zone <- c(1,2,4)
 
 # Store results in lists
 ttest_list <- list()

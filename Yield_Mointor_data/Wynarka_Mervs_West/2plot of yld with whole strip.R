@@ -11,10 +11,11 @@ library(terra)
 library(tidyterra)
 library(readxl)
 library(broom)
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
 
-
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
 
 
 
@@ -50,6 +51,14 @@ unique(Yld_data_av_to_ladder$treat_desc)
 str(Yld_data_av_to_ladder)
 unique(Yld_data_av_to_ladder$treat_desc)
 
+###define the the control
+
+Yld_data_av_to_ladder <- Yld_data_av_to_ladder %>% 
+  dplyr::mutate(treat_desc = case_when(
+    treat_desc== "Control (-Tillage -Lime)" ~ "Control",
+    .default = as.character(treat_desc)))
+
+unique(Yld_data_av_to_ladder$treat_desc)
 
 # Get control data and treatment names (excluding control)
 treatments <- unique(Yld_data_av_to_ladder$treat_desc[Yld_data_av_to_ladder$treat_desc != "Control"])

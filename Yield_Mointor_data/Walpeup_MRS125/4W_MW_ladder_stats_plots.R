@@ -17,14 +17,14 @@ library(readxl)
 ################################################################################
 ########################            Define the directory              ##########
 ################################################################################
- site_number <- "1.Walpeup_MRS125"
- site_name <- "Walpeup_MRS125"
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-#site_number <- "3.Wynarka_Mervs_West"
-#site_name <- "Wynarka_Mervs_West"
+site_number <- "3.Wynarka_Mervs_West"
+site_name <- "Wynarka_Mervs_West"
 
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
