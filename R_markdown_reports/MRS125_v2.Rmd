@@ -5,8 +5,8 @@ date: "2026-02-08"
 output: 
   pdf_document:
     latex_engine: xelatex
-Paddock: Mervs West
-Site: Wynarka
+Paddock: MRS 125
+Site: Walpeup
 ---
 
 ```{r setup, include=FALSE}
