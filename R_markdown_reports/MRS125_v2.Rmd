@@ -268,7 +268,7 @@ knitr::kable(constraints_description,
 
 (Please confirm this)
 
-```{r input for managmnet zone, echo=FALSE, warning=FALSE}
+```{r input for managmnet zone, echo=FALSE, warning=FALSE, fig.align='center', out.width='50%'}
  
 
 knitr::include_graphics(paste0(site_name, "_images/covs_1_16.png"))
@@ -485,11 +485,6 @@ A separate t-test was conducted for each treatment, with the control group as th
 
 Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
 
-Note control strip was moved in 2025.
-No samples were collected in new control, just the old control.
-
-
-This analysis is using location of old control.
 
 
 
