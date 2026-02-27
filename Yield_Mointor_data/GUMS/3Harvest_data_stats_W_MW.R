@@ -25,8 +25,11 @@ library(readr)
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
+
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
@@ -164,7 +167,7 @@ df <- df %>% rename(zone = mean_zone)
 # Get unique gridcodes
 zone <- unique(df$zone)
 ## at Merv the zone have 4 zone, but only 3 exist in the trial area
-zone <- c(1,2,4)
+#zone <- c(1,2,4)
 
 # Store results in lists
 ttest_list <- list()

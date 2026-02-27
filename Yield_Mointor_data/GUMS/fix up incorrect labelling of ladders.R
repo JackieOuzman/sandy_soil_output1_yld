@@ -21,14 +21,17 @@ library(broom)
 # site_number <- "101.Andrew_Thomas_Tanks"
 # site_name <- "Andrew_Thomas_Tanks"
 
- site_number <- "1.Walpeup_MRS125"
- site_name <- "Walpeup_MRS125"
+ # site_number <- "1.Walpeup_MRS125"
+ # site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
 # site_number <- "3.Wynarka_Mervs_West"
 # site_name <- "Wynarka_Mervs_West"
+
+ site_number <- "5.Walpeup_Gums"
+ site_name <- "Walpeup_Gums"
 
 
 
@@ -81,14 +84,16 @@ unique(ladders_qgis$treat_desc)
 str(ladders_qgis)
 ### what strips need fixing up?
 list_of_strips_to_fix <- c(
-  "Control (-Tillage -Lime)",
-  "Lime Control (3t)"  ,
-  "Rip"   ,
-  "Rip + Lime (3t)"  ,
-  "Spade" ,
-  "Spade + Lime (3t)"
-  #"Spade + Rip"        ,
- # "Spade + Rip + Lime (3t)"
+  #"Rip + Lime",
+  "Rip",
+  #"Control",
+  "Control +Lime",
+  "Horsch",
+  #"Bednar + Lime",
+   "Bednar" ,
+  #"Bednar + Future",
+  "Bednar + Lime + Future"
+  
 )
 
 ladders_qgis <- ladders_qgis %>%
@@ -101,5 +106,5 @@ ladders_qgis <- ladders_qgis %>%
 ladders_data_file_path
 
 st_write(ladders_qgis, paste0(headDir,"/", 
-                              "8.Yield_Data/25/Processed/MRS125_Seg_Dist10.0_VarWidth_poly3.shp"))
+                              "8.Yield_Data/25/Processed/Gums_TrialPlan_v5_PlotSegm_epsg7854_Dist10.0_VarWidth3_poly.shp"))
 

@@ -13,8 +13,11 @@ library(readxl)
 library(broom)
 
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
+
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 
 

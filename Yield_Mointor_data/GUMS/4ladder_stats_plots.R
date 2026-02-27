@@ -23,8 +23,12 @@ library(readxl)
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
+
+
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
