@@ -20,8 +20,8 @@ library(readr)
 ########################            Define the directory              ##########
 ################################################################################
 
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
@@ -32,8 +32,8 @@ site_name <- "Walpeup_MRS125"
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-# site_number <- "5.Walpeup_Gums"
-# site_name <- "Walpeup_Gums"
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 #site_number <- "6.Crystal_Brook_Randals"
 #site_name <- "Crystal_Brook_Randals"
@@ -99,7 +99,7 @@ treat.col.name <- "treat_desc"
 #################################################################################
 ### sometimes you will need to specify the sheet###
 dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie")
-#dat.raw <-   read_excel(file.path(headDir,    data_source$data), sheet = "Jackie GUMS")
+#dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie GUMS")
 #dat.raw <-   read_excel(file.path(headDir,   data_source$`file path`), sheet = "Jackie_MRS125")
 data.pts <-  st_read   (file.path(headDir,   shapefile_source$`file path`))
 ## Note that the data in these 2 files do not always match

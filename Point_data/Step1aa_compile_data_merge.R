@@ -15,8 +15,8 @@ library(readxl)
 
 
 
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
@@ -27,8 +27,8 @@ site_name <- "Walpeup_MRS125"
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-# site_number <- "5.Walpeup_Gums"
-# site_name <- "Walpeup_Gums"
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 #site_number <- "6.Crystal_Brook_Randals"
 #site_name <- "Crystal_Brook_Randals"
@@ -67,10 +67,10 @@ file_df
 
 
 
-  #dat_combined <- csv_files[1:8] %>%
+  dat_combined <- csv_files[1:8] %>%
   #dat_combined <- csv_files[1:3] %>%
   #dat_combined <- csv_files[1:6] %>%
-  dat_combined <- csv_files[1:7] %>%
+  #dat_combined <- csv_files[1:7] %>%
   lapply(function(file) {
     read_csv(file, col_types = cols(date_field_observation = col_character())) %>%
       mutate(source_file = basename(file))
@@ -118,9 +118,9 @@ ggplot() +
 # points are located in zone and strips
 names(zones)
 zones <- zones %>% rename(#"zone" = "cluster"  ,
-                          #"zone" = "cluster3"  ,
+                          "zone" = "cluster3"  ,
                           #"zone" = "fcl_mdl"  ,
-                          "zone" = "gridcode"  ,
+                          #"zone" = "gridcode"  ,
                           "zone_ha" = "POLY_AREA")
 names(strip)
 strip <- strip %>% rename("strip_ha" = "POLY_AREA") 

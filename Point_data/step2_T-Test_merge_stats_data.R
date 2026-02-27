@@ -15,8 +15,8 @@ library(emmeans)
 ################################################################################
 ########################            Define the directory              ##########
 ################################################################################
-site_number <- "1.Walpeup_MRS125"
-site_name <- "Walpeup_MRS125"
+# site_number <- "1.Walpeup_MRS125"
+# site_name <- "Walpeup_MRS125"
 
 # site_number <-"2.Crystal_Brook_Brians_House" 
 # site_name <-  "Crystal_Brook_Brians_House"
@@ -27,8 +27,8 @@ site_name <- "Walpeup_MRS125"
 # site_number <- "4.Wharminda"
 # site_name <- "Wharminda"
 
-# site_number <- "5.Walpeup_Gums"
-# site_name <- "Walpeup_Gums"
+site_number <- "5.Walpeup_Gums"
+site_name <- "Walpeup_Gums"
 
 #site_number <- "6.Crystal_Brook_Randals"
 #site_name <- "Crystal_Brook_Randals"
