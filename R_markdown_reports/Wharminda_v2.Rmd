@@ -503,11 +503,7 @@ knitr::include_graphics(paste0(site_name, "_images/sampling location jackie.png"
 
 
 
-**- Note at GUMS sample size is very low for Biomass at Flowering, use results with caution.**
-
-**- Only one sample collected in B strips and removed from analysis.**
-**- No samples were collected from RL strip** 
-**- No TGW or protein results yet.**
+**- Note at Wharminda sample collected was too low to run TWG and protein**
 
 
 
@@ -585,7 +581,7 @@ Harvest data from the yield monitor (processed in QGIS using Christina Tools, an
 6.	X and Y coordinates assigned to the shapefile.
 7.	Data exported as a shapefile and CSV.
 
-**GUMS raw yield data has some very high values**
+
 
 
 ```{r map of yld data rawish 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
