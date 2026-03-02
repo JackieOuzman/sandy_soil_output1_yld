@@ -26,11 +26,11 @@ library(rstatix)
  # site_number <- "3.Wynarka_Mervs_West"
  # site_name <- "Wynarka_Mervs_West"
 
-# site_number <- "4.Wharminda"
-# site_name <- "Wharminda"
+ site_number <- "4.Wharminda"
+ site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
 
 #site_number <- "6.Crystal_Brook_Randals"
 #site_name <- "Crystal_Brook_Randals"
@@ -93,8 +93,8 @@ merged_pt_sampling %>% distinct(field_observation)
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-#variable <- "Harvest index" # 
-variable <- "Protein"
+variable <- "Harvest index" # 
+#variable <- "Protein"
 
 
 str(merged_pt_sampling)

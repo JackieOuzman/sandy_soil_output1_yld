@@ -31,11 +31,11 @@ library(stringr)
 # site_number <- "3.Wynarka_Mervs_West"
 # site_name <- "Wynarka_Mervs_West"
 
-# site_number <- "4.Wharminda"
-# site_name <- "Wharminda"
+site_number <- "4.Wharminda"
+site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
 
 # site_number <- "6.Crystal_Brook_Randals"
 # site_name <- "Crystal_Brook_Randals"
@@ -134,11 +134,11 @@ names(Pt_sampling_details)
 
 #variable <- "Establishment" #
 #variable <- "Establishment CV" #
-variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+#variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
-#variable <- "Harvest index" # 
+variable <- "Harvest index" # 
 #variable <- "Protein"
 
 

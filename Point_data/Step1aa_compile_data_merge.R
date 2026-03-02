@@ -24,11 +24,11 @@ library(readxl)
 # site_number <- "3.Wynarka_Mervs_West"
 # site_name <- "Wynarka_Mervs_West"
 
-# site_number <- "4.Wharminda"
-# site_name <- "Wharminda"
+site_number <- "4.Wharminda"
+site_name <- "Wharminda"
 
-site_number <- "5.Walpeup_Gums"
-site_name <- "Walpeup_Gums"
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
 
 #site_number <- "6.Crystal_Brook_Randals"
 #site_name <- "Crystal_Brook_Randals"
@@ -67,7 +67,7 @@ file_df
 
 
 
-  dat_combined <- csv_files[1:8] %>%
+  dat_combined <- csv_files[1:6] %>%
   #dat_combined <- csv_files[1:3] %>%
   #dat_combined <- csv_files[1:6] %>%
   #dat_combined <- csv_files[1:7] %>%
@@ -118,8 +118,8 @@ ggplot() +
 # points are located in zone and strips
 names(zones)
 zones <- zones %>% rename(#"zone" = "cluster"  ,
-                          "zone" = "cluster3"  ,
-                          #"zone" = "fcl_mdl"  ,
+                          #"zone" = "cluster3"  ,
+                          "zone" = "fcl_mdl"  ,
                           #"zone" = "gridcode"  ,
                           "zone_ha" = "POLY_AREA")
 names(strip)
