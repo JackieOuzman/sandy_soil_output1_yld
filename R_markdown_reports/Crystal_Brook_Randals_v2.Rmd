@@ -529,13 +529,13 @@ knitr::include_graphics(
   c(
     paste0(site_name, "_images/plots/", "Establishment", "_strip_mean_T_test_plot.png"),
     #paste0(site_name, "_images/plots/", "Establishment CV", "_strip_mean_T_test_plot.png"),
-    paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_T_test_plot.png"),
+    #paste0(site_name, "_images/plots/", "Biomass_flowering", "_strip_mean_T_test_plot.png"),
     
     paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_T_test_plot.png"),
     paste0(site_name, "_images/plots/", "Grain yield", "_strip_mean_T_test_plot.png"),
-    #paste0(site_name, "_images/plots/", "Protein", "_strip_mean_T_test_plot.png"),
-    paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_T_test_plot.png")#,
-    #paste0(site_name, "_images/plots/", "Thousand grain weight", #"_strip_mean_T_test_plot.png")
+    paste0(site_name, "_images/plots/", "Protein", "_strip_mean_T_test_plot.png"),
+    paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_T_test_plot.png"),
+    paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_T_test_plot.png")
     
   )
 )
