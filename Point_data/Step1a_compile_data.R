@@ -64,13 +64,13 @@ projetion_crs <- 7854 #GDA2020 / MGA Zone 54 (EPSG:7854).
 
 #analysis.type <- "Establishment" #
 #analysis.type <- "Establishment CV" #
-#analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
 #analysis.type <- "Thousand grain weight" # 
 #analysis.type <- "Harvest index" # 
-analysis.type <- "Protein"
+#analysis.type <- "Protein"
 
 
 
@@ -98,7 +98,9 @@ treat.col.name <- "treat_desc"
 
 #################################################################################
 ### sometimes you will need to specify the sheet###
-dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie")
+#dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie")
+dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie Randals")
+#dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie BrianHouse")
 #dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie GUMS")
 #dat.raw <-   read_excel(file.path(headDir,   data_source$`file path`), sheet = "Jackie_MRS125")
 data.pts <-  st_read   (file.path(headDir,   shapefile_source$`file path`))

@@ -36,8 +36,8 @@ library(kableExtra)
 site_report <- "Crystal Brook"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
-site_number <- "6.Crystal_Brook_Randals"
-site_name <- "Crystal_Brook_Randals"
+site_number <- "2.Crystal_Brook_Brians_House"
+site_name <- "Crystal_Brook_Brians_House"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
@@ -271,7 +271,7 @@ knitr::kable(constraints_description,
 #### Layers used to define management zone
 
 
-**(No images Please confirm this)**
+
 
 
 
@@ -280,8 +280,8 @@ knitr::kable(constraints_description,
 ```{r input for managmnet zone, echo=FALSE, warning=FALSE, fig.align='center', out.width='50%'}
  
 
-# knitr::include_graphics(paste0(site_name, "_images/covs_1_16.png"))
-# knitr::include_graphics(paste0(site_name, "_images/covs_17_32.png"))
+ knitr::include_graphics(paste0(site_name, "_images/covs_1_16.png"))
+ knitr::include_graphics(paste0(site_name, "_images/covs_17_32.png"))
 
 
 # knitr::include_graphics(paste0(site_name, "_images/Gums_0-10_pH_Veris_uncalibrated_v2.png"))
@@ -395,8 +395,12 @@ strip <- strip %>%
 strip_dims <- strip %>%
   st_drop_geometry() %>%
   filter(treat_desc != "Buffer") %>%
-  select(Length_m, Width_m) %>%
-  slice(1)  # Get first row (they're all the same)
+  select(treat_desc, Length_m, Width_m) %>%
+  summarise(
+    Length_m = round(mean(Length_m), 0),
+    Width_m = round(mean(Width_m), 0)
+  )
+
 strip_length <- strip_dims$Length_m
 strip_width <- strip_dims$Width_m
 
@@ -440,13 +444,24 @@ summary_table <- joined %>%
  # summary_table <- summary_table %>%
  #  add_column(`Zone 3` = NA, .after = "Zone 2")
 
+
+strip_dims_per_strip <- strip %>%
+  st_drop_geometry() %>%
+  filter(treat_desc != "Buffer") %>%
+  select(treat_desc, Length_m, Width_m) %>%
+  dplyr::mutate(
+    Length_m = round(Length_m, 0),
+    Width_m = round(Width_m, 0)
+  )
+
+
 ```
 
 
 
 ```{r stats strips with zones, echo=FALSE, message=FALSE, warning=FALSE}
 # Create caption with strip dimensions
-caption <- paste0("Strip dimensions: ", strip_length, " m × ", strip_width, " m")
+caption <- paste0("Average strip dimensions: ", strip_length, " m × ", strip_width, " m")
 
 # knitr::kable(summary_table %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
 #              caption = caption,
@@ -455,8 +470,14 @@ caption <- paste0("Strip dimensions: ", strip_length, " m × ", strip_width, " m
 
 knitr::kable(summary_table %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
              caption = caption,
-             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Total (ha)'),
+             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (ha)'),
              booktabs = TRUE)
+
+knitr::kable(strip_dims_per_strip %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
+             caption = "Strip dimentions per treatment",
+             col.names = c('Treatment', 'Length (m)', 'Width (m)'),
+             booktabs = TRUE)
+
 ```
 
 #### Details Point sampling

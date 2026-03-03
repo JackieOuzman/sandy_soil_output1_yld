@@ -67,10 +67,11 @@ file_df
 
 
 
-  #dat_combined <- csv_files[1:6] %>%
   #dat_combined <- csv_files[1:3] %>%
+  #dat_combined <- csv_files[1:5] %>%
   #dat_combined <- csv_files[1:6] %>%
-  dat_combined <- csv_files[1:7] %>%
+  #dat_combined <- csv_files[1:7] %>%
+   dat_combined <- csv_files[1:8] %>%
   lapply(function(file) {
     read_csv(file, col_types = cols(date_field_observation = col_character())) %>%
       mutate(source_file = basename(file))

@@ -89,12 +89,12 @@ merged_pt_sampling %>% distinct(field_observation)
 
 #variable <- "Establishment" #
 #variable <- "Establishment CV" #
-#variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+variable <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 #variable <- "Biomass_maturity" # Maturity_biomass
 #variable <- "Grain yield" # 
 #variable <- "Thousand grain weight" # 
 #variable <- "Harvest index" # 
-variable <- "Protein"
+#variable <- "Protein"
 
 
 str(merged_pt_sampling)
@@ -175,7 +175,7 @@ t_test_results <- df %>%
 
 # Build letter display
 letters_display <- t_test_results %>%
-  select(treat, significance) %>%
+  dplyr::select(treat, significance) %>%
   mutate(group = ifelse(significance == "Significant", "b", "a")) %>%
   # Add control back in - it always gets "a" as the reference
   bind_rows(data.frame(treat = "C", significance = "Control", group = "a"))
@@ -184,14 +184,14 @@ letters_display <- t_test_results %>%
 letters_display
 
 results_table <- summary_stats %>%
-  left_join(letters_display %>% select(treat, group), by = "treat") %>%
-  left_join(t_test_results %>% select(treat, adj_p_value, significance), by = "treat") %>%
-  mutate(
+  left_join(letters_display %>% dplyr::select(treat, group), by = "treat") %>%
+  left_join(t_test_results %>% dplyr::select(treat, adj_p_value, significance), by = "treat") %>%
+  dplyr::mutate(
     adj_p_value = ifelse(is.na(adj_p_value), "-", round(adj_p_value, 3)),
     group = ifelse(is.na(group), "a", group)
   ) %>%
-  rename(Significance = group) %>%
-  select(treat, n_valid, mean, sd, median, Q1, Q3, min, max, Significance, adj_p_value)
+  dplyr::rename(Significance = group) %>%
+  dplyr::select(treat, n_valid, mean, sd, median, Q1, Q3, min, max, Significance, adj_p_value)
 
 results_table
 

@@ -1,5 +1,5 @@
 ---
-title: "Paddock Report"
+title: "Paddock Report: Randals — Crystal Brook"
 author: "Jackie Ouzman"
 date: "2026-02-08"
 output: 
@@ -9,8 +9,8 @@ header-includes:
   - \usepackage{tcolorbox}
   - \usepackage{xcolor}
   - \definecolor{deepteal}{RGB}{0, 137, 123}
-Paddock: TBC
-Site: Wharminda
+Paddock: Randals
+Site: Crystal Brook
 ---
 
 ```{r setup, include=FALSE}
@@ -71,7 +71,7 @@ list_of_sites <- data.frame(
     )
 
 knitr::kable(list_of_sites %>% filter(Name == site_report),
-             caption = "Site Information",
+             caption = "Met station information",
              booktabs = TRUE)
 
  
@@ -139,9 +139,9 @@ rainfall_summary <- data.frame(
                         "Average GS Rainfall (1 Apr - 15 Oct) (mm)"),
   Value = c(unique(decile_data$Number),
             unique(decile_data$Name),
-            round(annual_rainfall, 1),
-            round(summer_rainfall, 1),
-            round(gs_rainfall, 1)),
+            round(annual_rainfall, 0),
+            round(summer_rainfall, 0),
+            round(gs_rainfall, 0)),
   check.names = FALSE
 )
 
@@ -211,14 +211,22 @@ caption_text <- paste0("Trial Years with Rainfall Summary. \\\\ ",
                        "GS Period: ", gs_period, " \\\\ ",
                        "Summer Period: ", summer_period, " \\\\ ",
                        "Years Included: ", years_included)
-knitr::kable(rain_table2 %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
+
+knitr::kable(rain_table2 %>% 
+               mutate(
+                 `GS Decile` = stringr::str_to_title(gsub("_", " ", `GS Decile`)),
+                 `Summer Decile` = stringr::str_to_title(gsub("_", " ", `Summer Decile`)),
+                 `GS Rainfall (mm)` = round(`GS Rainfall (mm)`, 0),
+                 `Summer Rainfall (mm)` = round(`Summer Rainfall (mm)`, 0)
+               ) %>%
+               mutate(across(everything(), ~replace_na(as.character(.), ""))),
              caption = caption_text,
              booktabs = TRUE,
-             longtable = FALSE) %>%
+             longtable = FALSE,
+             digits = 0) %>%
   kable_styling(latex_options = c("hold_position", "scale_down")) %>%
   column_spec(2, width = "3cm") %>%
   column_spec(3, width = "3cm")
-
 
 ```
 
@@ -226,7 +234,7 @@ knitr::kable(rain_table2 %>% mutate(across(everything(), ~replace_na(as.characte
 
 
 knitr::kable(sowing_table1 %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
-             caption = "Trial Years Sowing Summary",
+             caption = "Trial year's crop summary",
              booktabs = TRUE,
              longtable = FALSE) %>%
   kable_styling(latex_options = c("hold_position", "scale_down")) %>%
@@ -245,14 +253,12 @@ path_constraints_description<- paste0(dir,"/work/multi-site analysis soil charac
 
 constraints_description <- readxl::read_excel(path_constraints_description, sheet = "Constraints Description") %>%
   dplyr::filter(Site == site_number) %>%
-  dplyr::select("Site",
-                "Repellence",
-                "Soil Strength",
-                "Acidity",
-                "Fertility",
-                "Carbonate",
-                "Notes") %>%
-  mutate(across(everything(), ~replace_na(as.character(.), "")))
+  dplyr::select("Site", "Repellence", "Soil Strength", "Acidity", 
+                "Fertility", "Carbonate", "Notes") %>%
+  mutate(
+    Site = stringr::str_to_title(gsub("_", " ", Site)),
+    across(everything(), ~replace_na(as.character(.), ""))
+  )
 
 
 
@@ -267,11 +273,6 @@ knitr::kable(constraints_description,
              booktabs = TRUE)
 ```
 ### Management zones:
-
-#### Layers used to define management zone
-
-
-**(No images Please confirm this)**
 
 
 
@@ -298,7 +299,7 @@ knitr::kable(constraints_description,
 # ))
 ```
 
-#### Map of management zone.
+
 
 
 ```{r map of managmnet zone, echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
@@ -330,7 +331,7 @@ zones_table <- zones %>%
     #Zone = as.character(cluster3), #
     #Zone = as.character(fcl_mdl), #
     Area_ha = round(POLY_AREA, 0),
-    Percent = round(POLY_AREA / sum(POLY_AREA) * 100, 1)
+    Percent = round(POLY_AREA / sum(POLY_AREA) * 100, 0)
   ) %>%
   select(Zone, Area_ha, Percent) %>%
   bind_rows(
@@ -350,10 +351,12 @@ knitr::kable(zones_table,
              booktabs = TRUE)
 ```
 
-#### Details strips.
+#### Details strips.  \
 
-**Date of amelioration:**
-**Additional information on strips:**
+
+**Date of amelioration:**  \
+
+**Additional information on strips:** \ 
 
 ```{r map of strip , echo=FALSE, warning=FALSE,fig.align='center', out.width='60%'}
  
@@ -387,7 +390,7 @@ strip <- strip %>%
     y_dist = bb$ymax - bb$ymin,
     Length_m = round(max(x_dist, y_dist), 0),
     Width_m = round(min(x_dist, y_dist), 0),
-    Area_ha = round(as.numeric(st_area(geometry)) / 10000, 2)
+    Area_ha = round(as.numeric(st_area(geometry)) / 10000, 0)
   ) %>%
   ungroup() %>%
   select(-bb, -x_dist, -y_dist)
@@ -395,8 +398,21 @@ strip <- strip %>%
 strip_dims <- strip %>%
   st_drop_geometry() %>%
   filter(treat_desc != "Buffer") %>%
-  select(Length_m, Width_m) %>%
-  slice(1)  # Get first row (they're all the same)
+  select(treat_desc, Length_m, Width_m) %>%
+  summarise(
+    Length_m = round(mean(Length_m), 0),
+    Width_m = round(mean(Width_m), 0)
+  )
+
+strip_dims_per_strip <- strip %>%
+  st_drop_geometry() %>%
+  filter(treat_desc != "Buffer") %>%
+  select(treat_desc, Length_m, Width_m) %>%
+  dplyr::mutate(
+    Length_m = round(Length_m, 0),
+    Width_m = round(Width_m, 0)
+  )
+
 strip_length <- strip_dims$Length_m
 strip_width <- strip_dims$Width_m
 
@@ -446,7 +462,7 @@ summary_table <- joined %>%
 
 ```{r stats strips with zones, echo=FALSE, message=FALSE, warning=FALSE}
 # Create caption with strip dimensions
-caption <- paste0("Strip dimensions: ", strip_length, " m × ", strip_width, " m")
+caption <- paste0("Average strip dimensions: ", strip_length, " m × ", strip_width, " m")
 
 # knitr::kable(summary_table %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
 #              caption = caption,
@@ -457,9 +473,13 @@ knitr::kable(summary_table %>% mutate(across(everything(), ~replace_na(as.charac
              caption = caption,
              col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Total (ha)'),
              booktabs = TRUE)
+knitr::kable(strip_dims_per_strip %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
+             caption = "Strip dimentions per treatment",
+             col.names = c('Treatment', 'Length (m)', 'Width (m)'),
+             booktabs = TRUE)
 ```
 
-#### Details Point sampling
+#### Details Point sampling  
 
 ```{r point sampling, message=FALSE, warning=FALSE, include=FALSE}
 Point_sampling <- readxl::read_excel(
@@ -480,8 +500,13 @@ point_table <- Point_sampling %>%
 
 ```{r point sampling table, echo=FALSE, message=FALSE, warning=FALSE}
 # Create caption with site number
-caption <- paste0("Point Sampling - Site: ", Point_sampling$Site[1])
+caption <- paste0("Point Sampling - Site: ", 
+                  stringr::str_to_title(gsub("_", " ", Point_sampling$Site[1])))
 
+point_table <- point_table %>%
+  mutate(
+    analysis_type = stringr::str_to_title(gsub("_", " ", analysis_type))
+  )
 knitr::kable(point_table,
              caption = caption,
              col.names = c('Analysis Type', 'Date Collected'),
@@ -497,20 +522,23 @@ knitr::include_graphics(paste0(site_name, "_images/sampling location jackie.png"
 #"H:/Output-1/3.Wynarka_Mervs_West/7.In_Season_data/25/sampling location jackie.png"
 ```
 
-#### Results Point sampling
-
-##### Strip 
+#### Results Point sampling  \
 
 
 
+Note Randal was resown, expect for one strip, chicken litter.  \ 
 
-**- Note Randal was resown, expect for one strip, chicken litter.**
+Maturity samples were taken along the original row via linear meters (4x50cm).  \  
 
-**- Maturity samples were taken along the original row via linear meters but (4*50cm)**
+Establish data was collect in both rows and inter row, all data used.  \
 
-**- Randal - Establish data was collect in both rows and inter row, all data used.**
+ 
 
-**- Randal - I cannot locate biomass at flowering results.**
+
+
+##### Strip \
+
+**Analysis details**  \
 
 Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. 
 
@@ -519,7 +547,9 @@ A separate t-test was conducted for each treatment, with the control group as th
 Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
 
 
+**Plot details** 
 
+Plots show mean values with error bars representing the first (Q1) and third (Q3) quartiles, indicating the spread of the middle 50% of the data.
 
 
 ```{r Stats pt sampling results strips1, echo=FALSE, fig.show='hold', warning=FALSE, out.width="50%"}
@@ -551,15 +581,11 @@ knitr::include_graphics(
 
 
 
-##### Strip by zone
-
-Sample size is very low and results not plotted.
 
 
 
 
-
-#### Results Yield data (off header).
+#### Results Yield data (off header).  \
 
 
 
@@ -582,7 +608,7 @@ Harvest data from the yield monitor (processed in QGIS using Christina Tools, an
 2.	Data thinned to 1m spacing.
 3.	No cleaning or trimming applied.
 4.	Yield not adjusted for moisture.
-5.	Outliers removed by visual inspection.
+5.	Outliers removed by visual inspection. (At most sites all data is retained)
 6.	X and Y coordinates assigned to the shapefile.
 7.	Data exported as a shapefile and CSV.
 
@@ -626,8 +652,8 @@ knitr::include_graphics(paste0(site_name, "_images/Yld_monitor_strip_distance.pn
 ```
 
 
-# Analysis by strips
-A separate t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
+## Analysis by strips  
+A t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
 
 
 ```{r Stats yld harvest data strips, echo=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
@@ -646,9 +672,9 @@ knitr::include_graphics(
 
 ```
 
-# Analysis by strips and zones
+## Analysis by strips and zones
 
-Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. This analysis was conducted separately within each management zone, such that a separate set of t-tests was performed for each zone, with each treatment compared to the control observations within that same zone. Note that while four management zones were defined across the broader field, only three zones (1, 2, and 4) were present within the trial area and were therefore included in the analysis. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
+Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. This analysis was conducted separately within each management zone, such that a separate set of t-tests was performed for each zone, with each treatment compared to the control observations within that same zone. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
 
 
 
