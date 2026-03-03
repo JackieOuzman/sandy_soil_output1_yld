@@ -490,7 +490,7 @@ Point_sampling <- readxl::read_excel(
   mutate(variable = str_remove(variable, regex(" date collected", ignore_case = TRUE))) %>%
   rename(Date_collected = `other details`,
          analysis_type = variable) %>%
-  select(Site , Date_collected, analysis_type) %>% 
+  dplyr::select(Site , Date_collected, analysis_type) %>% 
   mutate(Date_collected = as.Date(as.numeric(Date_collected), origin = "1899-12-30"))
 
 #names(Point_sampling)
