@@ -23,8 +23,8 @@ library(readr)
 # site_number <- "1.Walpeup_MRS125"
 # site_name <- "Walpeup_MRS125"
 
-# site_number <-"2.Crystal_Brook_Brians_House" 
-# site_name <-  "Crystal_Brook_Brians_House"
+site_number <-"2.Crystal_Brook_Brians_House"
+site_name <-  "Crystal_Brook_Brians_House"
 
  # site_number <- "3.Wynarka_Mervs_West"
  # site_name <- "Wynarka_Mervs_West"
@@ -35,8 +35,8 @@ library(readr)
 # site_number <- "5.Walpeup_Gums"
 # site_name <- "Walpeup_Gums"
 
-site_number <- "6.Crystal_Brook_Randals"
-site_name <- "Crystal_Brook_Randals"
+# site_number <- "6.Crystal_Brook_Randals"
+# site_name <- "Crystal_Brook_Randals"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 
@@ -64,7 +64,7 @@ projetion_crs <- 7854 #GDA2020 / MGA Zone 54 (EPSG:7854).
 
 #analysis.type <- "Establishment" #
 #analysis.type <- "Establishment CV" #
-analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
+#analysis.type <- "Biomass_flowering" #This is sometimes called biomass, or biomass at flowering 4.Peak_Biomass
 
 #analysis.type <- "Biomass_maturity" # Maturity_biomass
 #analysis.type <- "Grain yield" # 
@@ -98,8 +98,8 @@ treat.col.name <- "treat_desc"
 
 #################################################################################
 ### sometimes you will need to specify the sheet###
-#dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie")
-dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie Randals")
+dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie")
+#dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie Randals")
 #dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie BrianHouse")
 #dat.raw <-   read_excel(file.path(headDir,    data_source$`file path`), sheet = "Jackie GUMS")
 #dat.raw <-   read_excel(file.path(headDir,   data_source$`file path`), sheet = "Jackie_MRS125")
