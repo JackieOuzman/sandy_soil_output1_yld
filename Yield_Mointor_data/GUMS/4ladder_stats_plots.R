@@ -185,6 +185,13 @@ ggsave(paste0(headDir_analysis_folder,
 
 strips_zones_merged_stats_df
 
+#this is ordering the facet for zones
+strips_zones_merged_stats_df<- strips_zones_merged_stats_df %>% 
+  mutate(
+    treat = reorder(treat, `Order in Paddock`),
+    facet_label = paste0(zone_label, "(", zone, ")"),
+    facet_label = factor(facet_label, levels = unique(facet_label[order(as.numeric(zone))]))
+  )
 
 site.bar.plot <-
   strips_zones_merged_stats_df %>%
@@ -198,7 +205,8 @@ site.bar.plot <-
     size = 5,
     fontface = "bold"
   ) +
-  facet_wrap(~ paste0(zone_label,"(", zone, ")" )) +  # Add this line
+  facet_wrap(~ facet_label) + 
+  #facet_wrap(~ paste0(zone_label,"(", zone, ")" )) +  # Add this line
   labs(
     title = "",
     caption = "Treatment compared to the control using t-tests with Bonferroni-adjusted p-values, (p ≤ 0.10)",
