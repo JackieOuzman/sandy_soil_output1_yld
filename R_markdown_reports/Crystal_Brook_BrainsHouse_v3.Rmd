@@ -1,6 +1,6 @@
 ---
 title: "Paddock Report: Brains house — Crystal Brook"
-author: "Jackie Ouzman"
+author: "Sandy soil team prepared by Jackie Ouzman"
 date: "March 2026 version 3"
 output: 
   pdf_document:
@@ -70,15 +70,12 @@ list_of_sites <- data.frame(
     State = c("SA", "SA", "SA", "VIC","SA", "SA", "VIC", "SA", "SA")
     )
 
-# knitr::kable(list_of_sites %>% filter(Name == site_report),
-#              caption = "Met station information",
-#              booktabs = TRUE)
 
  
 ``` 
 
 
-```{r map of sites, echo=FALSE, warning=FALSE, fig.align='center', out.width='50%'}
+```{r map of sites, echo=FALSE, warning=FALSE, fig.align='center', out.width='70%'}
  
 
  knitr::include_graphics(paste0(site_name, "_images/site location map.png"))
@@ -203,39 +200,11 @@ years_included <- unique(Sowing_metadata$Years_included)[1]
 
 
 
-#V3
-# sowing_table1 <- sowing_table %>%
-#   select("Year" , "Crop"  , "Variety", "Sowing date"  , "Harvest date")
-# rain_table2 <- sowing_table %>%
-#   select("Year" , "GS Rainfall (mm)"  , "Summer Rainfall (mm)", "GS Decile"   ,"Summer Decile" )
+
 
 
 ```
 
-```{r rain table 2 v3, echo=FALSE, message=FALSE, warning=FALSE}
-
-# caption_text <- paste0("Trial Years with Rainfall Summary. \\\\ ",
-#                        "GS Period: ", gs_period, " \\\\ ",
-#                        "Summer Period: ", summer_period, " \\\\ ",
-#                        "Years Included: ", years_included)
-# 
-# knitr::kable(sowing_table_pivot %>%
-#                mutate(across(-Variable, ~ifelse(Variable == "GS Decile", 
-#                                                 stringr::str_to_title(gsub("_", " ", .)),
-#                                                 .))) %>%
-#                mutate(across(-Variable, ~ifelse(grepl("^[0-9.]+$", .), 
-#                                                 as.character(round(as.numeric(.), 0)), 
-#                                                 .))) %>%
-#                mutate(across(everything(), ~replace_na(as.character(.), ""))),
-#              caption = caption_text,
-#              booktabs = TRUE,
-#              longtable = FALSE) %>%
-#   kable_styling(latex_options = c("hold_position", "scale_down")) %>%
-#   column_spec(1, width = "4cm") %>%
-#   column_spec(2:ncol(sowing_table_pivot), width = "2cm")
-
-
-```
 
 
 ```{r rain and sow table V3 , echo=FALSE, message=FALSE, warning=FALSE}
@@ -274,19 +243,6 @@ knitr::kable(sowing_table_pivot %>%
 
 ```
 
-```{r sowing table, echo=FALSE, message=FALSE, warning=FALSE}
-
-
-# knitr::kable(sowing_table1 %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
-#              caption = "Trial year's crop summary",
-#              booktabs = TRUE,
-#              longtable = FALSE) %>%
-#   kable_styling(latex_options = c("hold_position", "scale_down")) %>%
-#   column_spec(2, width = "3cm") %>%
-#   column_spec(3, width = "3cm")
-
-
-```
 
 ### Soil constraints at site
 
@@ -392,16 +348,17 @@ zones_table <- zones %>%
 # Display as DT table
 knitr::kable(zones_table,
              col.names = c('Zone', 'Area (ha)', 'Percentage (%)'),
-             caption = "Area and percentage of each zone.",
+             caption = "Area and percentage of each zone for entire paddock.",
              booktabs = TRUE)
 ```
 
-#### Details strips.  \
+#### Details strips.  
 
+**Additional information on strips:** \   
 
-**Date of amelioration:**  \
+**e.g. Date of amelioration, working depth**  \
 
-**Additional information on strips:** \ 
+*** Still to be confirmed ***
 
 
 
@@ -496,17 +453,30 @@ summary_table <- joined %>%
 
 ```
 
+```{r pct strips with zone, message=FALSE, warning=FALSE, include=FALSE}
+summary_table <- summary_table %>%
+  bind_rows(
+    summarise(., across(where(is.numeric), sum), treat_desc = "Total")
+  )
+
+total_val <- summary_table %>% filter(treat_desc == "Total") %>% pull(Total)
+summary_table_pct <- summary_table %>%
+  mutate(across(where(is.numeric), ~ round(. / total_val * 100, 1)))
+summary_table_pct
+
+
+```
 
 
 ```{r stats strips with zones, echo=FALSE, message=FALSE, warning=FALSE}
 # Create caption with strip dimensions
-caption <- paste0("Max strip lenghth: ", strip_length, " m")
+caption <- paste0("Max strip dimension: ", strip_length, " m X ", strip_width, "m")
 
 
 
-knitr::kable(summary_table %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
+knitr::kable(summary_table_pct %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
              caption = caption,
-             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (ha)'),
+             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (%)'),
              booktabs = TRUE)
 
 # knitr::kable(strip_dims_per_strip %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
@@ -552,7 +522,12 @@ caption <- paste0("Point Sampling - Site: ",
 point_table <- point_table %>%
   mutate(
     analysis_type = stringr::str_to_title(gsub("_", " ", analysis_type)),
-    Date_collected = format(Date_collected, "%d/%m/%Y"))
+    Date_collected = format(Date_collected, "%d/%m/%Y")) 
+
+point_table <- point_table %>% 
+  filter(analysis_type != "Establishment Cv")
+
+   
  
   
 knitr::kable(point_table,
@@ -579,24 +554,29 @@ Location of sampling point, taken from shapefile on CSIRO directory.
 
 
 
-##### Strip \
-
-**Analysis details**  \
-
-Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. 
-
-A separate t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
-
-Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
 
 
-**Plot details** 
-
-Plots show mean values with error bars representing the first (Q1) and third (Q3) quartiles, indicating the spread of the middle 50% of the data.
 
 
-```{r Stats pt sampling results strips1, echo=FALSE, fig.show='hold', warning=FALSE, out.width="50%"}
+```{r Stats pt sampling results strips1, eval=FALSE, fig.show='hold', warning=FALSE, include=FALSE, out.width="50%"}
  
+
+
+##### Strip \
+# **Analysis details**  \
+# 
+# Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. 
+# 
+# A separate t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
+# 
+# Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
+
+
+# **Plot details** 
+# 
+# Plots show mean values with error bars representing the first (Q1) and third (Q3) quartiles, indicating the spread of the middle 50% of the data.
+
+
 
 knitr::include_graphics(
   c(
@@ -638,14 +618,20 @@ knitr::include_graphics(
 
 
 
-There are many different ways to analyse yield monitor data. Yield data is often noisy, so thinning, cleaning, and trimming are usually recommended. Yield data is also frequently kriged to interpolate missing values and generate a map.
+There are many different ways to analyse yield monitor data. 
+
+Yield data is often noisy, so thinning, cleaning, and trimming are usually recommended. 
+
+Yield data is also frequently kriged to interpolate missing values and generate a map.
 
 Strip trials add complexity to this process. Long, unreplicated strips within a paddock are difficult to krige. In some trials, low or zero yield values may be real, but standard cleaning and trimming methods may remove these values. Retaining zero values add complexity to statical analysis.
 
 The workflow below represents just one approach for analysing strip trial yield data collected from a yield monitor. Further refinement and testing are needed to optimise the method.
 Current Workflow
 
-Harvest data from the yield monitor (processed in QGIS using Christina Tools, an extension of PAT):
+### Raw yield data off the yield monitor
+
+Harvest data from the yield monitor:
 
 1.	Data projected.
 2.	Data thinned to 1m spacing.
@@ -665,7 +651,9 @@ knitr::include_graphics(paste0(site_name, "_images/Yield_data_jackie raw_data.pn
 #knitr::include_graphics("Wynarka_Mervs_West_images/Yield data  jackie raw data.png")
 ```
 
-Strip ladder polygons  (in QGIS using Christina Tools):
+### Averaged yield data per 'ladder'
+
+** Note this will be removed from growers report **
 
 8.	Strip treatments and control areas (excluding buffers) selected.
 9.	Polygon ladders generated (10m length × strip width).
@@ -676,6 +664,7 @@ Strip ladder polygons  (in QGIS using Christina Tools):
 
 knitr::include_graphics(paste0(site_name, "_images/Yield_data_jackie_ladders.png"))
 ```
+### Further analysis of avergaed yield data
 
 Analysis in R:
 
@@ -695,12 +684,15 @@ knitr::include_graphics(paste0(site_name, "_images/Yld_monitor_strip_distance.pn
 ```
 
 
-## Analysis by strips  
-A t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
 
 
-```{r Stats yld harvest data strips, echo=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+```{r Stats yld harvest data strips, eval=FALSE, fig.align='center', warning=FALSE, include=FALSE, out.width='100%'}
  
+
+
+# ## Analysis by strips  
+# A t-test was conducted for each treatment, with the control group as the reference in each comparison. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
 
 knitr::include_graphics(
   c(paste0(site_name, "_images/plots/", "Yld_monitor_strip_plot", ".png"))
@@ -717,7 +709,17 @@ knitr::include_graphics(
 
 ## Analysis by strips and zones
 
-Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. This analysis was conducted separately within each management zone, such that a separate set of t-tests was performed for each zone, with each treatment compared to the control observations within that same zone. To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
+Treatment effects were evaluated by comparing each treatment to the control using independent samples t-tests. 
+
+This analysis was conducted separately within each management zone, such that a separate set of t-tests was performed for each zone, with each treatment compared to the control observations within that same zone. 
+
+To account for the increased risk of Type I error associated with multiple comparisons, p-values were adjusted using the Bonferroni correction. 
+
+Treatments were considered statistically significantly different from the control at an adjusted p-value threshold of p ≤ 0.10. 
+
+Treatments that were not significantly different from the control are denoted with the letter "a", while treatments that were significantly different from the control are denoted with the letter "b". 
+
+All statistical analyses were conducted in R (version 4.5.1) using the broom and dplyr packages.
 
 
 
