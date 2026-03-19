@@ -344,15 +344,15 @@ zone_names_long <- readxl::read_excel(
 
 
 numbers <- trimws(strsplit(zone_names_number, ",")[[1]])
-shorts  <- trimws(strsplit(zone_names_short,  ",")[[1]])
-longs   <- trimws(strsplit(zone_names_long,   ",(?=\\[|[A-Z])", perl = TRUE)[[1]])
+shorts <- trimws(gsub("^[1-4]=\\s*", "", trimws(strsplit(zone_names_short, ",\\s*(?=[1-4]=)", perl = TRUE)[[1]])))
+longs  <- trimws(gsub("^[1-4]=\\s*", "", trimws(strsplit(zone_names_long,  ",\\s*(?=[1-4]=)", perl = TRUE)[[1]])))
 
 df_zones <- data.frame(
   zone_number = as.integer(numbers),
   zone_short_name  = shorts,
   zone_long_description   = longs
 )
-df_zones
+
 knitr::kable(df_zones,
              col.names = c('Zone number', 'Zone name', 'Details'),
              caption = "Zone names and details.",
@@ -531,15 +531,17 @@ strip <- st_read(paste0(headDir,file_path_strip))
 strip <- strip %>%
   rowwise() %>%
   mutate(
-    bb = list(st_bbox(geometry)),
-    x_dist = bb$xmax - bb$xmin,
-    y_dist = bb$ymax - bb$ymin,
-    Length_m = round(max(x_dist, y_dist), 0),
-    Width_m = round(min(x_dist, y_dist), 0),
-    Area_ha = round(as.numeric(st_area(geometry)) / 10000, 0)
+    hull     = list(st_convex_hull(geometry)),
+    mrect    = list(st_minimum_rotated_rectangle(hull)),
+    coords   = list(st_coordinates(mrect)[, 1:2]),
+    d1       = sqrt((coords[2,1]-coords[1,1])^2 + (coords[2,2]-coords[1,2])^2),
+    d2       = sqrt((coords[3,1]-coords[2,1])^2 + (coords[3,2]-coords[2,2])^2),
+    Length_m = round(max(d1, d2), 0),
+    Width_m  = round(min(d1, d2), 0),
+    Area_ha  = round(as.numeric(st_area(geometry)) / 10000, 0)
   ) %>%
   ungroup() %>%
-  select(-bb, -x_dist, -y_dist)
+  select(-hull, -mrect, -coords, -d1, -d2)
 
 strip_dims <- strip %>%
   st_drop_geometry() %>%
@@ -648,6 +650,14 @@ knitr::include_graphics(paste0(site_name, "_images/Strips Jackie.png"))
 
 #### Details Point sampling  
 
+A small number of point samples were collected throughout the growing season. 
+
+Sampling locations were selected to adjust an NDVI grid captured close to the sampling date, enabling the grid to be converted into a spatial map of crop establishment.  
+
+This analysis is ongoing and supplementary results will be provided as they become available.  
+
+
+
 ```{r point sampling, message=FALSE, warning=FALSE, include=FALSE}
 Point_sampling <- readxl::read_excel(
   paste0(metadata_path, metadata_file_name),
@@ -670,10 +680,16 @@ point_table <- Point_sampling %>%
 caption <- paste0("Point Sampling - Site: ", 
                   stringr::str_to_title(gsub("_", " ", Point_sampling$Site[1])))
 
+# point_table <- point_table %>%
+#   mutate(
+#     analysis_type = stringr::str_to_title(gsub("_", " ", analysis_type)),
+#     Date_collected = format(Date_collected, "%d/%m/%Y")) 
+
 point_table <- point_table %>%
   mutate(
-    analysis_type = stringr::str_to_title(gsub("_", " ", analysis_type)),
-    Date_collected = format(Date_collected, "%d/%m/%Y")) 
+    analysis_type  = stringr::str_to_title(gsub("_", " ", analysis_type)),
+    Date_collected = format(as.Date(as.numeric(Date_collected), origin = "1899-12-30"), "%d/%m/%Y")
+  )
 
 point_table <- point_table %>% 
   filter(analysis_type != "Establishment Cv")
