@@ -312,11 +312,16 @@ knitr::include_graphics(paste0(site_name, "_images/Zone Jackie.png"))
 # ))
 ```
 
-Soil grids were used to establish initial management zones within each paddock.   
 
-These zones were subsequently refined and validated following review of soil sampling results. 
 
-The tables below summarise the grid values for each zone across the entire paddock.
+Soil grids, long‑term NDVI, elevation data, and historical yield maps were used to establish the initial management zones within each paddock.
+
+Soil grid layers may include (but are not limited to) EM, gamma radiometrics, Veris pH, and bare‑earth.
+
+
+These management zones were subsequently refined and validated following the review of soil‑sampling results.
+
+The tables below summarise the grid‑derived values for each zone across the entire paddock.
 
 
 ```{r extra info managmnet zone, echo=FALSE, message=FALSE, warning=FALSE}
@@ -369,7 +374,7 @@ zone_soil_grid_summary_path_1 <- readxl::read_excel(
   pull("file name") 
 
 zone_soil_grid_summary_path_2 <- paste0(headDir, "/9.Maps/Soil/Jackie_working/")
-   
+
 
 # Read the file
 zone_soil_grid_summary <- read.csv(file.path(zone_soil_grid_summary_path_2, zone_soil_grid_summary_path_1))
@@ -399,21 +404,20 @@ zone_soil_grid_summary_tidy_v2
 zone_soil_grid_summary_tidy_v2 <- zone_soil_grid_summary_tidy_v2 %>%
   left_join(df_zones %>% select(zone_number, zone_short_name), 
             by = c("cluster" = "zone_number")) %>%
-    select(zone_short_name, everything())
+  select(zone_short_name, everything())
 zone_soil_grid_summary_tidy_v2
 
 
 names(zone_soil_grid_summary_tidy_v2)
 
 df_0_10cm <- zone_soil_grid_summary_tidy_v2 %>%
-  select(zone_short_name, cluster, ends_with("0-10cm"))
+  select(zone_short_name, cluster, ends_with("10cm"))
 
 df_40_60cm <- zone_soil_grid_summary_tidy_v2 %>%
-  select(zone_short_name, cluster, ends_with("40-60cm"))
+  select(zone_short_name, cluster, ends_with("60cm"))
 
 df_no_cm <- zone_soil_grid_summary_tidy_v2 %>%
-  select(-matches("\\d+-\\d+cm")) #%>% 
-  #select(-val)
+  select(-matches("cm$"))
 
 
 df_0_10cm_long <- df_0_10cm %>%
@@ -448,17 +452,20 @@ df_no_cm_long
 
 ```{r soil grid info on managmnet zone tables, echo=FALSE, message=FALSE, warning=FALSE}
 knitr::kable(df_0_10cm_long,
-             col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4'),
+             #col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4'),
+             col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3'),
              caption = "Mean value per zone for soil grids (range). Depth 0-10cm ",
              booktabs = TRUE)
 
 knitr::kable(df_40_60cm_long,
-             col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4'),
+            #col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4'),
+             col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3'),
              caption = "Mean value per zone for soil grids (range). Depth 40-60cm ",
              booktabs = TRUE)
 
 knitr::kable(df_no_cm_long,
-             col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4'),
+            #col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4'),
+             col.names = c('Soil grid', 'Zone 1', 'Zone 2', 'Zone 3'),
              caption = "Mean value per zone for soil grids (range).",
              booktabs = TRUE)
 
@@ -629,7 +636,8 @@ caption <- paste0("Max strip dimension: ", strip_length, " m X ", strip_width, "
 
 knitr::kable(summary_table_pct %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
              caption = caption,
-             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (%)'),
+             #col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (%)'),
+             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Total (%)'),
              booktabs = TRUE)
 
 # knitr::kable(strip_dims_per_strip %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
@@ -650,7 +658,8 @@ knitr::include_graphics(paste0(site_name, "_images/Strips Jackie.png"))
 
 #### Details Point sampling  
 
-A small number of point samples were collected throughout the growing season. 
+
+A small number of point samples were collected across the strip trial throughout the growing season, including point measurements such as emergence counts, biomass cuts, and penetrometer measurement.  
 
 Sampling locations were selected to adjust an NDVI grid captured close to the sampling date, enabling the grid to be converted into a spatial map of crop establishment.  
 
