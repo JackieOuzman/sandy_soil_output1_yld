@@ -78,7 +78,7 @@ Month_end_summer_rainfall_before_GS <- 4
 
 ```{r list of sites, echo=FALSE}
 list_of_sites <- data.frame(
-    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello", "Crystal Brook", "Wynarka", "Quateup"),
+    Name = c("Karoonda", "Wharminda", "Copeville", "Walpeup" , "Bute", "Balaklava", "Annuello", "Crystal Brook", "Wynarka", "Qualeup"),
     Number = c("25006", "18113", "25003", "76065", "21012", "21002", "76000", "21016", "25006", "10635"),
     Latitude = c("-35.09", "-33.97", "-34.80", "-35.14",  "-33.86", "-34.14", "-34.85",   "-33.35", "-35.09", "-33.7853"),
     Longitude = c("139.90", "136.25", "139.85", "142.02", "138.01", "138.42", "142.78", "138.21", "139.90", "116.9064"),
