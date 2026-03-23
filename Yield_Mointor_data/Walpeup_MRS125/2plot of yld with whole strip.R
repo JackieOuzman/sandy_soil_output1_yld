@@ -13,8 +13,24 @@ library(readxl)
 library(broom)
 
 
-site_number <- "3.Wynarka_Mervs_West"
-site_name <- "Wynarka_Mervs_West"
+site_number <- "1.Walpeup_MRS125"
+site_name <- "Walpeup_MRS125"
+
+# site_number <-"2.Crystal_Brook_Brians_House" 
+# site_name <-  "Crystal_Brook_Brians_House"
+
+# site_number <- "3.Wynarka_Mervs_West"
+# site_name <- "Wynarka_Mervs_West"
+
+# site_number <- "4.Wharminda"
+# site_name <- "Wharminda"
+
+# site_number <- "5.Walpeup_Gums"
+# site_name <- "Walpeup_Gums"
+
+# site_number <- "6.Crystal_Brook_Randals"
+# site_name <- "Crystal_Brook_Randals"
+
 
 
 
@@ -31,8 +47,13 @@ analysis.yr <- "25"
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
 metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
 
-crs_used <- 7854
 
+orientation_df <- read.csv(paste0(metadata_path, "ladder_orientation_all_sites.csv"))
+# Pull labels for current site
+start_label <- orientation_df$start_label[orientation_df$site == site_number]
+end_label   <- orientation_df$end_label[orientation_df$site == site_number]
+
+crs_used <- 7854
 
 Yld_data_av_to_ladder <- read.csv(paste0(
   headDir,
@@ -99,6 +120,29 @@ ggplot(combined, aes(x = Ladder_PointID*10, y = mean_yld, color = treat_desc)) +
   theme_minimal() +
   theme(legend.position = "none") +
   labs(title = "Yield down strip", x = "Distance along strip", y = "Mean yield")
+
+
+### Plot with orientation 
+# Get y position for labels from your data
+y_max <- max(combined$mean_yld, na.rm = TRUE)
+x_max <- max(combined$Ladder_PointID * 10, na.rm = TRUE)
+
+ggplot(combined, aes(x = Ladder_PointID * 10, y = mean_yld, color = treat_desc)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~ facet) +
+  scale_color_manual(values = treatment_colour) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "Yield down strip", x = "Distance along strip", y = "Mean yield") +
+  annotate("text",
+           x = 0,
+           y = y_max,
+           label = start_label,
+           fontface = "bold",
+           size = 4,
+           hjust = 0,
+           vjust = 1) 
+
 
 headDir_analysis_folder <- paste0(headDir, "/10.Analysis/25/Harvest/")
 
