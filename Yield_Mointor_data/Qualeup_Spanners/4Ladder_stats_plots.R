@@ -108,6 +108,8 @@ strips_zones_merged_stats <- list.files(
 print(strips_merged_stats)
 print(strips_zones_merged_stats)
 
+
+
 ##################################################################################
 ### Load the files
 # strips_merged_stats_df <- read_csv(paste0(headDir_analysis_folder,
@@ -133,6 +135,9 @@ strips_zones_merged_stats_df <- list.files(
 ) %>%
   lapply(read.csv) %>%
   bind_rows()
+
+
+#strips_zones_merged_stats_df <- strips_zones_merged_stats_df %>% dplyr::mutate(`Treatment Name` = treat_desc)
 
 ################################################################################
 #append the metadata file 1
@@ -222,7 +227,11 @@ ggsave(paste0(headDir_analysis_folder,
 
 strips_zones_merged_stats_df
 strips_zones_merged_stats_df <- strips_zones_merged_stats_df %>% mutate(year = as.factor(year))
-table(strips_zones_merged_stats_df$year)
+unique(strips_zones_merged_stats_df$treat)
+unique(strips_zones_merged_stats_df$treat_desc)
+unique(strips_zones_merged_stats_df$`Treatment Name`)
+
+
 
 site.bar.plot <-
   strips_zones_merged_stats_df %>%
