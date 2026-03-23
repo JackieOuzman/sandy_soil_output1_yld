@@ -224,7 +224,6 @@ strips_zones_merged_stats_df
 strips_zones_merged_stats_df <- strips_zones_merged_stats_df %>% mutate(year = as.factor(year))
 table(strips_zones_merged_stats_df$year)
 
-
 site.bar.plot <-
   strips_zones_merged_stats_df %>%
   mutate(treat = reorder(treat, `Order in Paddock`)) %>%
@@ -233,11 +232,11 @@ site.bar.plot <-
   geom_errorbar(aes(ymin = Q1, ymax = Q3), width = 0.2, color = "black") +
   geom_text(
     aes(label = Significance, y = Q3),
-    vjust = -0.5,
-    size = 5,
+    vjust = -0.8,      # increase to push letters higher above Q3
+    size = 3,          # smaller text fits better in compact panels
     fontface = "bold"
   ) +
-  facet_grid(year ~ paste0(zone_label, " (", zone, ")")) +  # year rows x zone cols
+  facet_grid(year ~ paste0(zone_label, " (", zone, ")")) +
   labs(
     title = "",
     caption = "Treatment compared to the control using t-tests with Bonferroni-adjusted p-values, (p ≤ 0.10)",
@@ -247,17 +246,20 @@ site.bar.plot <-
   ) +
   scale_fill_manual(values = setNames(strips_zones_merged_stats_df$Hex,
                                       strips_zones_merged_stats_df$`Treatment Name`)) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.15))) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.30))) +  # more top padding
   theme_minimal() +
   theme(
-    text = element_text(size = 16),
-    axis.title = element_text(size = 16),
-    axis.text = element_text(size = 16),
-    plot.title = element_text(size = 16, hjust = 0.5),
-    plot.caption = element_text(size = 10),
+    text = element_text(size = 12),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 8),          # smaller for all axis text
+    axis.text.y = element_text(size = 8),        # y axis numbers smaller still
+    plot.title = element_text(size = 12, hjust = 0.5),
+    plot.caption = element_text(size = 8),
     legend.position = "bottom",
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 10)         # facet label size
   )
+
 
 # Print the plot
 site.bar.plot

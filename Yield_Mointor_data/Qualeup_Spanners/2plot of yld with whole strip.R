@@ -39,7 +39,7 @@ crs_used <- 7850
 
 Yld_data_av_to_ladder <- read.csv(paste0(
   headDir,
-  "/8.Yield_Data/25/Processed/",
+  "/8.Yield_Data/Processed/",
   "Yld_data_av_to_ladder.csv"
 ))
   
@@ -65,7 +65,7 @@ treatment_order <-  readxl::read_excel(
   pull(`Treatment Name`)
 
 
-combined$facet <- factor(combined$facet, levels = treatment_order)
+#combined$facet <- factor(combined$facet, levels = treatment_order)
 
 treatment_colour <-  readxl::read_excel(
   paste0(metadata_path,metadata_file_name),
@@ -128,3 +128,63 @@ plot_yield_strip(Yld_data_2020, 2020)
 plot_yield_strip(Yld_data_2021, 2021)
 plot_yield_strip(Yld_data_2022, 2022)
 plot_yield_strip(Yld_data_2023, 2023)
+
+### without per yr plots
+
+
+plot_yield_strip_2 <- function(dat, yr) {
+  
+  dat <- dat %>%
+    mutate(treat_desc = stringr::str_remove_all(treat_desc, "\n") %>% trimws()) %>%
+    mutate(treat_desc = case_when(
+      treat_desc == "Control (-Tillage -Lime)" ~ "Control",
+      .default = as.character(treat_desc)
+    ))
+  
+  treatments <- unique(dat$treat_desc[dat$treat_desc != "Control"])
+  
+  control_data <- dat %>%
+    filter(treat_desc == "Control") %>%
+    slice(rep(1:n(), length(treatments))) %>%
+    mutate(facet = rep(treatments, each = n() / length(treatments)))
+  
+  treatment_data <- dat %>%
+    filter(treat_desc != "Control") %>%
+    mutate(facet = treat_desc)
+  
+  combined <- rbind(control_data, treatment_data) %>%
+    mutate(year = yr)  # add year column
+  
+  combined$facet <- factor(combined$facet, levels = treatment_order)
+  
+  return(combined)
+}
+
+# Run and combine all years into one dataframe
+combined_all_years <- bind_rows(
+  plot_yield_strip_2(Yld_data_2020, 2020),
+  plot_yield_strip_2(Yld_data_2021, 2021),
+  plot_yield_strip_2(Yld_data_2022, 2022),
+  plot_yield_strip_2(Yld_data_2023, 2023)
+)
+
+
+
+all_yrs_plot <- ggplot(combined_all_years, aes(x = Ladder_PointID * 10, y = mean_yld, color = treat_desc)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~ facet) +
+  scale_color_manual(values = treatment_colour) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(
+    title = paste("Yield down strip" ),
+    x = "Distance along strip",
+    y = "Mean yield"
+  )+
+  facet_wrap(~year)
+
+headDir_analysis_folder <- paste0(headDir, "/10.Analysis/Harvest/")
+
+all_yrs_plot
+ggsave(paste0(headDir_analysis_folder, "Yld_monitor_strip_distance_all_yrs", ".png"),
+       width = 14, height = 8)
