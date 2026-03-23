@@ -70,10 +70,11 @@ unique(Yld_data_av_to_ladder$treat_desc)
 
 str(Yld_data_av_to_ladder)
 unique(Yld_data_av_to_ladder$treat_desc)
-
+unique(Yld_data_av_to_ladder$treat)
 
 # Get control data and treatment names (excluding control)
 treatments <- unique(Yld_data_av_to_ladder$treat_desc[Yld_data_av_to_ladder$treat_desc != "Control"])
+
 treatments
 
 # Duplicate control rows for every treatment facet
@@ -133,7 +134,11 @@ ggplot(combined, aes(x = Ladder_PointID * 10, y = mean_yld, color = treat_desc))
   scale_color_manual(values = treatment_colour) +
   theme_minimal() +
   theme(legend.position = "none") +
-  labs(title = "Yield down strip", x = "Distance along strip", y = "Mean yield") +
+  labs(title = "Yield down strip", 
+      # subtitle = "Control is grey",
+       caption = "Control is reference line in grey *NB at MRS125 Control (-Tillage -Lime)",
+       x = "Distance along strip (m)", 
+       y = "Mean yield (t/ha)") +
   annotate("text",
            x = 0,
            y = y_max,
