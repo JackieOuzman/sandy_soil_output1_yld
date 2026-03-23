@@ -137,7 +137,7 @@ gs_rainfall <- decile_data %>%
 # Create a summary table
 rainfall_summary <- data.frame(
   `Rainfall Metric` = c("Met Station Number",
-                        #"Station Name",
+                        "Station Name",
                         "Average Annual Rainfall (mm)", 
                         "Average Summer Rainfall (1 Nov - 1 Apr) (mm)", 
                         "Average GS Rainfall (1 Apr - 15 Oct) (mm)"),
@@ -148,7 +148,7 @@ rainfall_summary <- data.frame(
             round(gs_rainfall, 0)),
   check.names = FALSE
 )
-
+rainfall_summary <- rainfall_summary %>% dplyr::filter(`Rainfall Metric` != "Station Name")
 
 # Display with
 knitr::kable(rainfall_summary,
@@ -322,6 +322,8 @@ Soil grid layers may include (but are not limited to) EM, gamma radiometrics, Ve
 These management zones were subsequently refined and validated following the review of soil‑sampling results.
 
 The tables below summarise the grid‑derived values for each zone across the entire paddock.
+
+NB Enqi is on leave (23/3/2026) when he is back I can get the grids and do these tables.
 
 
 ```{r extra info managmnet zone, echo=FALSE, message=FALSE, warning=FALSE}

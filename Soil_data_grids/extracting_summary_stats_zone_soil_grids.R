@@ -33,8 +33,11 @@ library(readr)
 # site_number <- "5.Walpeup_Gums"
 # site_name <- "Walpeup_Gums"
 
-site_number <- "6.Crystal_Brook_Randals"
-site_name <- "Crystal_Brook_Randals"
+# site_number <- "6.Crystal_Brook_Randals"
+# site_name <- "Crystal_Brook_Randals"
+
+site_number <- "98.Auxillary_Sites/11.Qualeup_Spanners"
+site_name <- "Auxillary_Sites_11.Qualeup_Spanners"
 
 dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 
@@ -42,15 +45,15 @@ dir <- "//fs1-cbr.nexus.csiro.au/{af-sandysoils-ii}"
 headDir <- paste0(dir, "/work/Output-1/", site_number)
 
 
-analysis.yr <- "25"
+#analysis.yr <- "25"
 
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
 
-metadata_file_name <- "names of treatments per site 2025 metadata and other info_v2.xlsx"
+metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
 
 crs_used <- 4326 # Name: WGS 84 (World Geodetic System 1984) Type: Geographic coordinate system (latitude/longitude)
-projetion_crs <- 7854 #GDA2020 / MGA Zone 54 (EPSG:7854).
-
+projetion_crs <- 7850 #WA GDA2020 / MGA Zone 50 (EPSG:7850).
+#projetion_crs <- 7854 #GDA2020 / MGA Zone 54 (EPSG:7854).
 
 
 #### Bring in the zone data 
