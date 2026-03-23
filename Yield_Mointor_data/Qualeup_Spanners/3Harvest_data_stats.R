@@ -185,7 +185,7 @@ Yld_ladders_2023 %>%
 # Function
 harvest_zone_stats <- function(dat, yr) {
   
-  dat <- Yld_ladders_2023 # for testing /debugging
+  #dat <- Yld_ladders_2023 # for testing /debugging
   
   df <- dat %>% rename(zone = mean_zone)
   zone <- unique(df$zone)

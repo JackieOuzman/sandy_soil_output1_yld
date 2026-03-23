@@ -79,6 +79,8 @@ ladders_data_file_path <-  readxl::read_excel(
   filter(variable == "ladder polygons") %>% 
   pull("file path")
 
+
+
 ### This site has multiple years
 
 harvest_data_file_path_2020 <-  readxl::read_excel(
@@ -173,7 +175,16 @@ unique(ladders_qgis$treat_desc)
 ladders_qgis <- ladders_qgis %>%
   mutate(treat_desc = stringr::str_remove_all(treat_desc, "\n") %>% trimws())
 unique(ladders_qgis$treat_desc)
+str(ladders_qgis)
 
+ladders_qgis <- ladders_qgis %>%
+  mutate(
+    PointID    = max(PointID) + min(PointID) - PointID,
+    DistOnLine = max(DistOnLine) + min(DistOnLine) - DistOnLine
+  )
+
+range(ladders_qgis$PointID)
+range(ladders_qgis$DistOnLine)
 
 ################################################################################
 
@@ -376,3 +387,4 @@ for(yr in years) {
 }
 
 unique(yld_data_with_summary_pt$treat)
+
