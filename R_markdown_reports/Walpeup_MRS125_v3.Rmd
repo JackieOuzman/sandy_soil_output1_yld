@@ -498,8 +498,8 @@ zones <- st_read(paste0(headDir,file_path_zone))
 zones_table <- zones %>%
   st_drop_geometry() %>%  # Remove geometry column
   mutate(
-    #Zone = as.character(gridcode), #
-    Zone = as.character(cluster), #
+    Zone = as.character(gridcode), #
+    #Zone = as.character(cluster), #
     #Zone = as.character(fcl_mdl), #
     #Zone = as.character(cluster3), #
     #Zone = as.character(fcl_mdl), #
@@ -607,10 +607,10 @@ joined <- joined %>%
 # Create summary table
 # Create summary table
 summary_table <- joined %>%
-  rename(Zone = cluster) %>% 
+  #rename(Zone = cluster) %>% 
   #rename(Zone = cluster3) %>% 
   #rename(Zone = fcl_mdl) %>% 
-  #rename(Zone = gridcode) %>% 
+  rename(Zone = gridcode) %>% 
   st_drop_geometry() %>%
   filter(treat_desc != "Outside Control" & treat_desc != "Buffer") %>%
   select(treat_desc, Zone, Area_ha) %>%
@@ -651,8 +651,8 @@ caption <- paste0("Max strip dimension: ", strip_length, " m X ", strip_width, "
 
 knitr::kable(summary_table_pct %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
              caption = caption,
-             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (%)'),
-             #col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Total (%)'),
+             #col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (%)'),
+             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Total (%)'),
              booktabs = TRUE)
 
 # knitr::kable(strip_dims_per_strip %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
@@ -777,7 +777,7 @@ knitr::include_graphics(
     
     paste0(site_name, "_images/plots/", "Biomass_maturity", "_strip_mean_T_test_plot.png"),
     paste0(site_name, "_images/plots/", "Grain yield", "_strip_mean_T_test_plot.png"),
-    paste0(site_name, "_images/plots/", "Protein", "_strip_mean_T_test_plot.png"),
+    #paste0(site_name, "_images/plots/", "Protein", "_strip_mean_T_test_plot.png"),
     paste0(site_name, "_images/plots/", "Harvest index", "_strip_mean_T_test_plot.png"),
     paste0(site_name, "_images/plots/", "Thousand grain weight", "_strip_mean_T_test_plot.png")
     
