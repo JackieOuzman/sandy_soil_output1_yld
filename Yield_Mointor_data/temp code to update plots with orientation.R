@@ -1,5 +1,7 @@
 #useful code for strip plot
 
+################################################################################
+
 orientation_df <- read.csv(paste0(metadata_path, "ladder_orientation_all_sites.csv"))
 # Pull labels for current site
 start_label <- orientation_df$start_label[orientation_df$site == site_number]
@@ -18,7 +20,8 @@ ggplot(combined, aes(x = Ladder_PointID * 10, y = mean_yld, color = treat_desc))
   theme(legend.position = "none") +
   labs(title = "Yield down strip", 
        # subtitle = "Control is grey",
-       caption = "Control is reference line in grey *NB at MRS125 Control (-Tillage -Lime)",
+       #caption = "Control is reference line in grey *NB at MRS125 Control (-Tillage -Lime)",
+       caption = "Control is reference line in grey",
        x = "Distance along strip (m)", 
        y = "Mean yield (t/ha)") +
   annotate("text",
