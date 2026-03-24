@@ -636,9 +636,9 @@ summary_table <- joined %>%
 
 
 
-## Note at this site there was no strips with zone 3
- # summary_table <- summary_table %>%
- #  add_column(`Zone 3` = NA, .after = "Zone 2")
+# Note at this site there was no strips with zone 3 Mervs
+summary_table <- summary_table %>%
+ add_column(`Zone 3` = NA, .after = "Zone 2")
 
 ```
 
@@ -665,8 +665,8 @@ caption <- paste0("Max strip dimension: ", strip_length, " m X ", strip_width, "
 
 knitr::kable(summary_table_pct %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
              caption = caption,
-             #col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (%)'),
-             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Total (%)'),
+             col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Zone 4','Total (%)'),
+             #col.names = c('Treatment', 'Zone 1', 'Zone 2', 'Zone 3','Total (%)'),
              booktabs = TRUE)
 
 # knitr::kable(strip_dims_per_strip %>% mutate(across(everything(), ~replace_na(as.character(.), ""))),
