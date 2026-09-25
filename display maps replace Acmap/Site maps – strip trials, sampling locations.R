@@ -132,3 +132,8 @@ map_strips <- ggplot() +
   theme(legend.position = "right")
 
 map_strips
+
+# ---- Map 1: save ----
+ggsave(paste0(site_name, "_strip_map.png"), map_strips,
+       width = 29.7, height = 21, units = "cm", dpi = 300)
+getwd()
