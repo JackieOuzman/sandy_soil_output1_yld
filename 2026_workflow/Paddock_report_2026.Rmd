@@ -76,8 +76,11 @@ zone_field <- dplyr::case_when(
 
 analysis.yr <- substr(report_year, 3, 4)  
 
-# NEW: folder where the 2026 scripts save their outputs
 out_dir <- "H:/Output-1/Jackie notes processing etc/R_markdown_reports/2026_outputs"
+map_dir <- file.path(out_dir, "maps")        # NEW: where 03_Maps_for_report.R saves the PNGs
+
+# NEW: yield chunks only run once the 2026 yield plots exist (set TRUE after harvest)
+has_yield <- FALSE
 
 metadata_path <- paste0(dir,"/work/Output-1/0.Site-info/")
 metadata_file_name <- "names of treatments per site 2025 metadata and other info.xlsx"
@@ -112,7 +115,7 @@ list_of_sites <- data.frame(
 ```{r 05_map of sites, echo=FALSE, warning=FALSE, fig.align='center', out.width='70%'}
  
 
- knitr::include_graphics(paste0(site_name, "_images/site location map.png"))
+ knitr::include_graphics(file.path(map_dir, paste0(site_name, "_location_map.png")))
 
 ```
 
@@ -188,7 +191,10 @@ rainfall_summary <- rainfall_summary %>% dplyr::filter(`Rainfall Metric` != "Sta
 knitr::kable(rainfall_summary,
              caption = "Rainfall Summary Statistics",
              booktabs = TRUE,
-             col.names = c("", ""))
+                         col.names = c("", "")) %>%
+  kable_styling(latex_options = "hold_position", position = "left") %>%   # NEW: left-aligned
+  column_spec(1, width = "8cm") %>%                                       # NEW: similar width to Table 2
+  column_spec(2, width = "2cm")
 ```
 
 
@@ -271,7 +277,7 @@ knitr::kable(sowing_table_pivot %>%
              caption = caption_text,
              booktabs = TRUE,
              longtable = FALSE) %>%
-  kable_styling(latex_options = c("hold_position", "scale_down")) %>%
+   kable_styling(latex_options = c("hold_position", "scale_down"), position = "left") %>%   # NEW: left-aligned
   column_spec(1, width = "4cm") %>%
   column_spec(2:ncol(sowing_table_pivot), width = "2cm")
 
@@ -281,45 +287,42 @@ knitr::kable(sowing_table_pivot %>%
 ### Soil constraints at site
 
 ```{r 10_Soil constraints, include=FALSE}
-#Need some information here….
+path_constraints_description <- paste0(dir, "/work/multi-site analysis soil characteristics/Sandy Soils II-site descriptors.xlsx")
+constraint_cols <- c("Repellence", "Soil Strength", "Acidity", "Fertility", "Carbonate", "Notes")
 
-path_constraints_description<- paste0(dir,"/work/multi-site analysis soil characteristics/Sandy Soils II-site descriptors.xlsx")
+# NEW: constraints now come from the "Constraints by zone" sheet (one row per site and zone)
+constraints_by_zone <- tryCatch(
+  readxl::read_excel(path_constraints_description, sheet = "Constraints by zone") %>%
+    filter(Site == site_number) %>%
+    mutate(zone = as.integer(Zone)),
+  error = function(e) NULL)
+if (is.null(constraints_by_zone)) constraints_by_zone <- tibble(zone = integer())
 
-constraints_description <- tryCatch(                     # NEW: tolerate a missing file or missing site row
-  readxl::read_excel(path_constraints_description, sheet = "Constraints Description") %>%
-    dplyr::filter(Site == site_number) %>%
-    dplyr::select("Site", "Repellence", "Soil Strength", "Acidity",
-                  "Fertility", "Carbonate", "Notes"),
-  error = function(e) NULL
-)
+# zone names from zone_details (df_zones is not built until a later chunk)
+zone_names_tbl <- readxl::read_excel(paste0(metadata_path, metadata_file_name), sheet = "zone_details") %>%
+  filter(Site == site_number) %>%
+  transmute(zone = as.integer(`zone names`),
+            Zone = trimws(sub("^[0-9]+\\s*=\\s*", "", `zone label names`)))
 
-if (is.null(constraints_description) || nrow(constraints_description) == 0) {   # NEW: TBC placeholder
-  constraints_description <- data.frame(
-    Site = site_number, Repellence = "TBC", `Soil Strength` = "TBC",
-    Acidity = "TBC", Fertility = "TBC", Carbonate = "TBC",
-    Notes = "Zone-level constraints to be confirmed",
-    check.names = FALSE
-  )
-}
+constraints_table <- zone_names_tbl %>%
+  left_join(constraints_by_zone %>% select(zone, any_of(constraint_cols)), by = "zone")
 
-constraints_description <- constraints_description %>%
-  mutate(
-    Site = stringr::str_to_title(gsub("_", " ", Site)),
-    across(everything(), ~replace_na(as.character(.), ""))
-  )
+for (cc in constraint_cols) if (!cc %in% names(constraints_table)) constraints_table[[cc]] <- NA_character_
 
-
-
-
-
+constraints_table <- constraints_table %>%
+  mutate(across(all_of(constraint_cols[1:5]),
+                ~ ifelse(is.na(.x) | trimws(as.character(.x)) == "", "TBC", as.character(.x))),
+         Notes = replace_na(as.character(Notes), "")) %>%
+  transmute(Zone = paste0(zone, " ", Zone), Repellence, `Soil Strength`, Acidity, Fertility, Carbonate, Notes)
 ```
 
 ```{r 11_Soil constraints table, echo=FALSE}
-# Display with
-knitr::kable(constraints_description,
-             caption = "Constraints description",
-             booktabs = TRUE)
+knitr::kable(constraints_table %>% select(where(~ any(.x != ""))),      # drops Notes if empty
+             caption = "Soil constraints by zone (to be confirmed).",
+             booktabs = TRUE) %>%
+  kable_styling(latex_options = c("hold_position", "scale_down"), position = "left")
 ```
+
 ### Management zones:
 
 
@@ -353,7 +356,7 @@ knitr::kable(constraints_description,
 ```{r 13_map of managmnet zone, echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
  
 
-knitr::include_graphics(paste0(site_name, "_images/Zone Jackie.png"))
+knitr::include_graphics(file.path(map_dir, paste0(site_name, "_zones_map.png")))
 
 # knitr::include_graphics(c(
 #   paste0(headDir, "/3.Covariates/6.Clusters_Zones/FINAL/Zone Jackie.png")
@@ -547,13 +550,38 @@ knitr::kable(zones_table,
              booktabs = TRUE)
 ```
 
-#### Details strips.  
+#### Treatment strips details.
 
-**Additional information on strips:** \   
+```{r 18a_treatment details, echo=FALSE, message=FALSE, warning=FALSE}
+# NEW: strip details come from the "treatment names" sheet
+treat_details <- readxl::read_excel(paste0(metadata_path, metadata_file_name),
+                                    sheet = "treatment names") %>%
+  filter(Site == site_number) %>%
+  arrange(`Order in Paddock`) %>%
+  mutate(
+    d_num = suppressWarnings(as.numeric(`Date implemented`)),   # Excel dates arrive as numbers
+    `Date implemented` = case_when(
+      is.na(`Date implemented`) ~ "",
+      !is.na(d_num)             ~ format(as.Date(d_num, origin = "1899-12-30"), "%d %b %Y"),
+      TRUE                      ~ as.character(`Date implemented`)),   # text entries kept as written
+    Amendment = ifelse(is.na(Amedment), "",
+                       trimws(paste(Amedment,
+                                    ifelse(is.na(`Amedment rate`), "", paste(`Amedment rate`,
+                                           ifelse(is.na(Unit), "", Unit)))))),
+    `Machine used`  = replace_na(as.character(`Machine used`), ""),
+    `Working depth` = replace_na(as.character(`Working depth`), "")
+  ) %>%
+  select(Treatment = `Treatment Name`, `Date implemented`, Amendment, `Machine used`, `Working depth`) %>%
+  select(Treatment, where(~ any(.x != "")))       # drop columns with nothing in them yet
 
-**e.g. Date of amelioration, working depth**  \
+knitr::kable(treat_details, booktabs = TRUE, caption = "Treatment details.") %>%
+  kable_styling(latex_options = c("hold_position", "scale_down"), position = "left") %>%
+  column_spec(1, width = "4.5cm") %>%
+  column_spec(2, width = "6cm")
+```
 
-*** Still to be confirmed ***
+`r if (!"Machine used" %in% names(treat_details)) "*Machine used and working depth are still to be confirmed.*"`
+
 
 
 
@@ -681,10 +709,10 @@ knitr::kable(summary_table_pct %>% mutate(across(everything(), ~replace_na(as.ch
 ```
 
 
-```{r 23_map of strip , echo=FALSE, warning=FALSE,fig.align='center', out.width='60%'}
+```{r 23_map of strip , echo=FALSE, warning=FALSE,fig.align='center', out.width='100%'}
  
 
-knitr::include_graphics(paste0(site_name, "_images/Strips Jackie.png"))
+knitr::include_graphics(file.path(map_dir, paste0(site_name, "_strips_map.png")))
 
 
 ```
@@ -735,30 +763,12 @@ knitr::kable(soil_table,
              col.names = c("Zone", "Points", depths, "Total", depths, "Total", "N class"),
              caption = paste0("Soil water and mineral nitrogen before sowing (", soil_sample_date, ").")) %>%
   add_header_above(c(" " = 2, "Stored soil water (mm)" = 4, "Mineral N (kg/ha)" = 4, " " = 1)) %>%
-  kable_styling(latex_options = c("hold_position", "scale_down"))
+  kable_styling(latex_options = c("hold_position", "scale_down"), position = "left")   
 ```
 
 Stored soil water is the total water held in the soil at sampling, not the water available to the crop. Mineral N class for the 0-100 cm profile: Low is below 40, Medium is 40 to 70, and High is above 70 kg/ha.
 
-```{r 23c_presowing soil plot, echo=FALSE, message=FALSE, warning=FALSE, fig.height=3.5, fig.width=7, fig.align='center', out.width='90%', eval=has_presowing}
-zone_cols <- setNames(df_zones$hex_code, df_zones$zone_short_name)
 
-plot_df <- soil_zone %>%
-  left_join(zone_lookup, by = "zone") %>%
-  select(zone_short_name, depth_group, soil_water_mm, min_n_kg_ha) %>%
-  pivot_longer(c(soil_water_mm, min_n_kg_ha), names_to = "measure", values_to = "value") %>%
-  mutate(measure = ifelse(measure == "soil_water_mm", "Stored soil water (mm)", "Mineral N (kg/ha)"),
-         depth_group = factor(depth_group, levels = rev(depths)),
-         zone_short_name = factor(zone_short_name, levels = df_zones$zone_short_name))
-
-ggplot(plot_df, aes(x = value, y = depth_group, fill = zone_short_name)) +
-  geom_col(position = position_dodge(width = 0.8), width = 0.7, colour = "grey30") +
-  facet_wrap(~measure, scales = "free_x") +
-  scale_fill_manual(values = zone_cols, name = "Zone") +
-  labs(x = NULL, y = "Soil depth") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-```
 
 #### Details Point sampling 
 
@@ -769,48 +779,51 @@ Sampling locations were selected to adjust an NDVI grid captured close to the sa
 
 This analysis is ongoing and supplementary results will be provided as they become available.  
 
-
-
 ```{r 24_point sampling, message=FALSE, warning=FALSE, include=FALSE}
-# NEW: sampling dates now come from the "Plant sampling notes" sheet
 Point_sampling <- readxl::read_excel(
   paste0(metadata_path, metadata_file_name),
   sheet = "Plant sampling notes") %>%
-  filter(Site == site_number, Year == report_year, !is.na(date)) %>%
-  rename(Date_collected = date,
-         analysis_type  = sampling_event)
+  filter(Site == site_number, Year == report_year) %>%     # CHANGED: events without a date yet are kept
+  rename(Date_collected = date, analysis_type = sampling_event)
 
 point_table <- Point_sampling %>%
-  select(analysis_type, Date_collected)
+  select(analysis_type, Date_collected, cut_size)
 ```
 
 ```{r 25_point sampling table, echo=FALSE, message=FALSE, warning=FALSE}
-# NEW: caption from site_name, not from the (possibly empty) table
-caption <- paste0("Point Sampling - Site: ",
+caption <- paste0("Sampling events - Site: ",
                   stringr::str_to_title(gsub("_", " ", site_name)))
 
-point_table <- point_table %>%
+plant_rows <- point_table %>%
   mutate(
     analysis_type  = stringr::str_to_title(gsub("_", " ", analysis_type)),
-    Date_collected = format(as.Date(Date_collected), "%d/%m/%Y")    # NEW: real dates
+    Date_collected = ifelse(is.na(Date_collected), "Date to be confirmed",
+                            format(as.Date(Date_collected), "%d %b %Y")),
+    cut_size       = replace_na(as.character(cut_size), "")
   )
 
-# NEW: placeholder if no sampling dates are entered yet
-if (nrow(point_table) == 0) {
-  point_table <- data.frame(analysis_type = "No sampling dates recorded yet",
-                            Date_collected = "")
-}
+# NEW: pre-sowing soil sampling row, from the soil summary file
+soil_row <- data.frame(
+  analysis_type  = "Pre-sowing soil (water and mineral N)",
+  Date_collected = ifelse(has_presowing, format(as.Date(min(soil_zone$sampling_date)), "%d %b %Y"),
+                          "Date to be confirmed"),
+  cut_size       = "0-100 cm")
 
-knitr::kable(point_table,
+sampling_table <- bind_rows(soil_row, plant_rows)
+
+knitr::kable(sampling_table,
              caption = caption,
-             col.names = c('Analysis Type', 'Date Collected'),
-             booktabs = TRUE)
+             col.names = c("Sampling event", "Date collected", "Sample size"),
+             booktabs = TRUE) %>%
+  kable_styling(latex_options = "hold_position", position = "left")
 ```
 
-```{r 26_map of sampling location 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
+
+
+```{r 26_map of sampling location, echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
  
 
-knitr::include_graphics(paste0(site_name, "_images/sampling location jackie.png"))
+knitr::include_graphics(file.path(map_dir, paste0(site_name, "_sampling_map.png")))
 
 
 #"H:/Output-1/3.Wynarka_Mervs_West/7.In_Season_data/25/sampling location jackie.png"
@@ -911,11 +924,9 @@ if (file.exists(f)) knitr::include_graphics(f) else cat("NDVI AUC plot not avail
 
 
 
+`r if (!has_yield) "*2026 yield results will be added after harvest.*"`
 
-
-
-
-There are many different ways to analyse yield monitor data. 
+There are many different ways to analyse yield monitor data.
 
 Yield data is often noisy, so thinning, cleaning, and trimming are usually recommended. 
 
@@ -941,7 +952,7 @@ Harvest data from the yield monitor:
 
 
 
-```{r 28_map of yld data rawish 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
+```{r 28_map of yld data rawish 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%', eval=has_yield}
  
 
 knitr::include_graphics(paste0(site_name, "_images/Yield_data_jackie raw_data.png"))
@@ -956,7 +967,7 @@ knitr::include_graphics(paste0(site_name, "_images/Yield_data_jackie raw_data.pn
 9.	Polygon ladders generated (10m length × strip width).
 10.	Polygon, line, and point layers exported as shapefiles.
 
-```{r 29_map of yld data polygons 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%'}
+```{r 29_map of yld data polygons 2025 , echo=FALSE, warning=FALSE, fig.align='center', out.width='60%', eval=has_yield}
  
 
 knitr::include_graphics(paste0(site_name, "_images/Yield_data_jackie_ladders.png"))
@@ -974,7 +985,7 @@ Analysis in R:
 
 
 
-```{r 30_map of yld along strips , echo=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+```{r 30_map of yld along strips , echo=FALSE, warning=FALSE, fig.align='center', out.width='100%', eval=has_yield}
  
 
 knitr::include_graphics(paste0(site_name, "_images/Yld_monitor_strip_distance.png"))
@@ -1022,7 +1033,7 @@ All statistical analyses were conducted in R (version 4.5.1) using the broom and
 
 
 
-```{r 32_Stats yld harvest data, echo=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+```{r 32_Stats yld harvest data, echo=FALSE, warning=FALSE, fig.align='center', out.width='100%', eval=has_yield}
  
 
 knitr::include_graphics(
