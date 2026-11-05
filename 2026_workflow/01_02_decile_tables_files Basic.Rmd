@@ -111,7 +111,7 @@ DT::datatable(list_of_file)
 * Shiny application would be nice but then I have problem saving the output.
 
 ```{r sites_selction, echo=FALSE}
- site_selected <- "10635"
+ site_selected <- "76065"
 print(site_selected)
 ```
 ## Download the **Neater met file**  
@@ -219,7 +219,7 @@ paste("GS season: ", GS_defined_as)
 df_all_date <- df #keep this
 
 start <- "1900-01-01"
-end <- "2025-12-31"
+end <- "2026-12-31"
 
 ### Filter dataset based on years 
 df <- df %>% filter(between(Date, as.Date(start), as.Date(end)))
