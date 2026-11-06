@@ -122,7 +122,7 @@ list_of_sites <- data.frame(
 
 ```{r 06_imprort daily met season type, echo=FALSE}
 
-file_path_input_data<-file.path("H:","Output-1", "0.Site-info", "Climate", "Decile_tables")
+file_path_input_data <- file.path(out_dir, "climate")   # NEW: climate files are now saved in 2026_outputs/climate
 
 met_station_number <- list_of_sites %>% 
   filter(Name == site_report) %>% 
@@ -797,10 +797,16 @@ caption <- paste0("Sampling events - Site: ",
 plant_rows <- point_table %>%
   mutate(
     analysis_type  = stringr::str_to_title(gsub("_", " ", analysis_type)),
-    Date_collected = ifelse(is.na(Date_collected), "Date to be confirmed",
-                            format(as.Date(Date_collected), "%d %b %Y")),
+    date_chr       = as.character(Date_collected),                                    # NEW
+    date_serial    = suppressWarnings(as.numeric(date_chr)),                          # NEW
+    date_iso       = as.Date(substr(date_chr, 1, 10), format = "%Y-%m-%d"),           # NEW
+    date_value     = dplyr::coalesce(date_iso, as.Date(date_serial, origin = "1899-12-30")),   # NEW
+    Date_collected = case_when(is.na(date_chr)    ~ "Date to be confirmed",           # NEW
+                               !is.na(date_value) ~ format(date_value, "%d %b %Y"),   # NEW
+                               TRUE               ~ date_chr),                        # NEW: text kept as written
     cut_size       = replace_na(as.character(cut_size), "")
-  )
+  ) %>%
+  select(-date_chr, -date_serial, -date_iso, -date_value)                             # NEW
 
 # NEW: pre-sowing soil sampling row, from the soil summary file
 soil_row <- data.frame(
