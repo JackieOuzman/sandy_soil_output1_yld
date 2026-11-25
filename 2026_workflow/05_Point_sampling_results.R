@@ -33,7 +33,7 @@ site_lookup <- data.frame(
 
 
 # ---- Choose the site: change this ONE number (1 to 8) ------------------------
-site_id <- 1                                                                 
+site_id <- 2                                                                 
 
 site        <- site_lookup[site_lookup$id == site_id, ]                      
 stopifnot(nrow(site) == 1)                                                  
@@ -66,6 +66,13 @@ locs <- map_dfr(years, function(yy) {
 
 # ---- Attach coordinates -----------------------------------------------------
 pts <- results %>% left_join(locs, by = c("year", "event", "pt_id"))
+
+# NEW: if an event has no location for a point (site 2 2025 flowering point 11), use that point's Establishment location
+est_xy <- locs %>% filter(event == "Establishment") %>% dplyr::select(year, pt_id, x_est = x, y_est = y)
+pts <- pts %>%
+  left_join(est_xy, by = c("year", "pt_id")) %>%
+  mutate(x = coalesce(x, x_est), y = coalesce(y, y_est)) %>%
+  dplyr::select(-x_est, -y_est)
 
 # CHECK: both should be 0
 sum(is.na(pts$x))

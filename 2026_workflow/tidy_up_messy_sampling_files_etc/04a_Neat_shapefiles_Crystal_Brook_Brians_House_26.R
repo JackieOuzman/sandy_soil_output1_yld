@@ -25,7 +25,7 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 #   The xlsx has no date and no cut size (rows, length, spacing), those need to come from Enqi.     # NEW
 events <- tribble(
   ~event,                ~date,        ~shp_in,                                                                                                          ~copy_from,
-  "Pre_season_Sampling", NA,           "4.Sampling/2.InSeason/26/1.Pre_plant/Soil/Centered/CRY_BHO_Pre_season_Soil_Sampling_Actual_Centered_7854.shp",   NA,   # soil date still to find
+  "Pre_season_Sampling", "2026-03-31",           "4.Sampling/2.InSeason/26/1.Pre_plant/Soil/Centered/CRY_BHO_Pre_season_Soil_Sampling_Actual_Centered_7854.shp",   NA,   # soil date still to find
   "Establishment",       "2026-06-11", "4.Sampling/2.InSeason/26/Emergence/Actual/BHO_Emergence_2026.shp",                                               NA,   # merged 120 pts, EPSG 7854
   "Biomass_flowering",   "2026-09-09", "7.In_Season_data/25/Biomass/Sampling_Plan_1/BHO_sampled_points_7854.shp",                                        NA    # ASSUMED same 20 pts as the 2025 plan
 )
