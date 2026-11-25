@@ -14,6 +14,13 @@ out_dir <- "H:/Output-1/Jackie notes processing etc/R_markdown_reports/2026_outp
 map_dir <- file.path(out_dir, "maps")
 dir.create(map_dir, showWarnings = FALSE, recursive = TRUE)
 
+# NEW: maps are saved in maps/<site_name>/ and the folder is created on first save
+map_file <- function(site_name, type) {                                  # NEW
+  d <- file.path(map_dir, site_name)                                     # NEW
+  dir.create(d, showWarnings = FALSE, recursive = TRUE)                  # NEW
+  file.path(d, paste0(site_name, "_", type, "_map.png"))                 # NEW
+}                                                                        # NEW
+
 run_ids <- 8        # NEW: start with Walpeup; change to 1:8 once it looks right
 
 sites <- tibble(
@@ -73,7 +80,7 @@ make_zones_map <- function(site_number, site_name, zone_field) {
     scale_fill_manual(values = setNames(zl$hex, zl$label), breaks = zl$label,
                       name = "Zone", na.value = "grey85") +
     map_theme
-  ggsave(file.path(map_dir, paste0(site_name, "_zones_map.png")), p,
+  ggsave(map_file(site_name, "zones"), p,                                # NEW
          width = 8, height = 5, dpi = 200, bg = "white")   # NEW: wider
 }
 
@@ -118,7 +125,7 @@ make_strips_map <- function(site_number, site_name, zone_field) {
     scale_fill_manual(values = cols, breaks = tn$treat_desc, name = "Treatment",
                       guide = guide_legend(order = 1)) +
     map_theme
-  ggsave(file.path(map_dir, paste0(site_name, "_strips_map.png")), p,
+  ggsave(map_file(site_name, "strips"), p,                               # NEW
          width = 8, height = 5, dpi = 200, bg = "white")
 }
 
@@ -160,7 +167,7 @@ make_sampling_map <- function(site_number, site_name, zone_field) {
     scale_shape_manual(values = c("Pre-sowing soil core" = 21), name = "Sampling points",
                        guide = guide_legend(order = 3)) +
     map_theme
-  ggsave(file.path(map_dir, paste0(site_name, "_sampling_map.png")), p,
+  ggsave(map_file(site_name, "sampling"), p,                             # NEW
          width = 8, height = 5, dpi = 200, bg = "white")
 }
 
@@ -200,7 +207,7 @@ make_location_map <- function(site_number, site_name, zone_field) {
     theme_void()
   
   p <- main + inset_element(inset, left = 0.70, bottom = 0.62, right = 0.99, top = 0.99)
-  ggsave(file.path(map_dir, paste0(site_name, "_location_map.png")), p,
+  ggsave(map_file(site_name, "location"), p,                             # NEW
          width = 7, height = 5, dpi = 200, bg = "white")
 }
 
