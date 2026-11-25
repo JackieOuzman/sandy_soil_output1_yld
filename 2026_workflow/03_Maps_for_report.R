@@ -21,7 +21,7 @@ map_file <- function(site_name, type) {                                  # NEW
   file.path(d, paste0(site_name, "_", type, "_map.png"))                 # NEW
 }                                                                        # NEW
 
-run_ids <- 8        # NEW: start with Walpeup; change to 1:8 once it looks right
+run_ids <- 1:8        # NEW: start with Walpeup; change to 1:8 once it looks right
 
 sites <- tibble(
   id          = 1:8,
@@ -171,6 +171,49 @@ make_sampling_map <- function(site_number, site_name, zone_field) {
          width = 8, height = 5, dpi = 200, bg = "white")
 }
 
+# ---- 3b. plant sampling points map (in-season plant samples; soil cores are on the sampling map) ----   # NEW
+plant_year <- "26"                                                                                        # NEW
+
+make_plant_map <- function(site_number, site_name, zone_field) {                                          # NEW
+  tn     <- treat_nm %>% filter(Site == site_number) %>%
+    transmute(treat_desc = `Treatment Name`, hex = Hex, ord = `Order in Paddock`) %>%
+    arrange(ord)
+  strips <- st_read(get_shp(site_number, "trial.plan"), quiet = TRUE)
+  zl     <- zone_lookup(site_number)
+  zones  <- st_read(get_shp(site_number, "location of zone shp"), quiet = TRUE) %>%
+    st_transform(st_crs(strips)) %>%
+    mutate(zone = as.integer(.data[[zone_field]])) %>%
+    left_join(zl, by = "zone")
+  cols   <- c(setNames(tn$hex, tn$treat_desc), Buffer = "#FFFFFF")
+  
+  loc_dir <- file.path(root, site_number, "4.Sampling/2.InSeason", plant_year, "shapefile_neat_jackie")  # NEW
+  loc_f   <- list.files(loc_dir, full.names = TRUE,                                                      # NEW
+                        pattern = paste0("^", site_name, "_All_sampling_locations_", plant_year, "_[0-9]+\\.csv$"))
+  if (length(loc_f) == 0) stop("no All_sampling_locations file for ", site_name)                         # NEW
+  d   <- read.csv(loc_f[1]) %>% filter(event != "Pre_season_Sampling")                                   # NEW
+  pts <- st_as_sf(d, coords = c("x", "y"), crs = d$epsg[1]) %>%                                          # NEW
+    st_transform(st_crs(strips))
+  ev_labels <- c(Establishment = "Establishment count", Biomass_flowering = "Biomass at flowering",
+                 Harvest = "Harvest cut")                                                                # NEW
+  ev_shapes <- c(Establishment = 22, Biomass_flowering = 24, Harvest = 23)                               # NEW
+  
+  p <- ggplot() +
+    geom_sf(data = zones, aes(fill = label), colour = NA, alpha = 0.3) +
+    scale_fill_manual(values = setNames(zl$hex, zl$label), breaks = zl$label,
+                      name = "Zones", na.value = "grey85",
+                      guide = guide_legend(order = 2)) +
+    new_scale_fill() +
+    geom_sf(data = strips, aes(fill = treat_desc), colour = "grey30", linewidth = 0.2, alpha = 0.8) +
+    scale_fill_manual(values = cols, breaks = tn$treat_desc, name = "Treatment",
+                      guide = guide_legend(order = 1)) +
+    geom_sf(data = pts, aes(shape = event), size = 2, colour = "black", fill = "white") +               # NEW
+    scale_shape_manual(values = ev_shapes, labels = ev_labels, name = "Sampling points",                # NEW
+                       guide = guide_legend(order = 3)) +
+    map_theme
+  ggsave(map_file(site_name, "plants"), p,                                                               # NEW
+         width = 8, height = 5, dpi = 200, bg = "white")
+}                                                                                                        # NEW
+
 # ---- 4. site location map (met-station town only, with Australia inset) ----
 towns <- tibble(station = c("Walpeup", "Crystal Brook", "Wynarka", "Wharminda"),
                 lat     = c(-35.14, -33.35, -35.09, -33.97),
@@ -214,7 +257,7 @@ make_location_map <- function(site_number, site_name, zone_field) {
 # ---- run ----
 for (i in run_ids) {
   s <- sites[i, ]
-  for (f in c("make_zones_map", "make_strips_map", "make_sampling_map", "make_location_map")) {
+  for (f in c("make_zones_map", "make_strips_map", "make_sampling_map", "make_plant_map", "make_location_map")) {   # NEW
     tryCatch({
       get(f)(s$site_number, s$site_name, s$zone_field)
       message("done: ", f, " - ", s$site_name)
