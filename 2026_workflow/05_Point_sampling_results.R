@@ -33,7 +33,7 @@ site_lookup <- data.frame(
 
 
 # ---- Choose the site: change this ONE number (1 to 8) ------------------------
-site_id <- 2                                                                 
+site_id <- 3                                                                 
 
 site        <- site_lookup[site_lookup$id == site_id, ]                      
 stopifnot(nrow(site) == 1)                                                  
